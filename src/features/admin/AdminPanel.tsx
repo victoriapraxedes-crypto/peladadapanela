@@ -70,7 +70,23 @@ export function AdminPanel() {
   const [confirmarEncerrar, setConfirmarEncerrar] = useState(false);
   const [encerrando, setEncerrando] = useState(false);
   const [versao, setVersao] = useState(0);
+  const [pendentes, setPendentes] = useState(0);
   const hojeISO = new Date().toISOString().slice(0, 10);
+
+  useEffect(() => {
+    let ativo = true;
+    (async () => {
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("acesso", "pendente");
+      if (ativo) setPendentes(count ?? 0);
+    })();
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
 
   useEffect(() => {
     let ativo = true;
