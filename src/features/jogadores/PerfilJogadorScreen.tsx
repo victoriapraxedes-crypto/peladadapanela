@@ -64,6 +64,11 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
         .order("data", { referencedTable: "peladas", ascending: false })
         .limit(5);
       if (!ativo) return;
+      if (playerRes.error || seasonRes.error || peladasRes.error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       setPlayer(playerRes.data ?? null);
       setSeasonId(seasonRes.data?.id ?? null);
       const linhas = (peladasRes.data ?? []) as unknown as { peladas: PeladaRow }[];
@@ -80,7 +85,7 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
     return () => {
       ativo = false;
     };
-  }, [playerId]);
+  }, [playerId, tentativa]);
 
   useEffect(() => {
     let ativo = true;
