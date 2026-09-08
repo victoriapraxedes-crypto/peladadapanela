@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, ChevronRight, Users, History } from "lucide-react";
 import { toast } from "sonner";
@@ -215,20 +215,27 @@ function NextPeladaCard() {
     };
   }, [hojeISO, fetchConfirmados, tentativa]);
 
+  const fetchConfirmadosRef = useRef(fetchConfirmados);
   useEffect(() => {
-    if (!pelada) return;
+    fetchConfirmadosRef.current = fetchConfirmados;
+  }, [fetchConfirmados]);
+
+  // Um único canal por pelada: a assinatura só depende do id.
+  const peladaId = pelada?.id ?? null;
+  useEffect(() => {
+    if (!peladaId) return;
     const channel = supabase
-      .channel(`pelada_players:${pelada.id}`)
+      .channel(`pelada_players:${peladaId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "pelada_players",
-          filter: `pelada_id=eq.${pelada.id}`,
+          filter: `pelada_id=eq.${peladaId}`,
         },
         () => {
-          void fetchConfirmados(pelada.id);
+          void fetchConfirmadosRef.current(peladaId);
         },
       )
       .subscribe();
@@ -236,7 +243,7 @@ function NextPeladaCard() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [pelada, fetchConfirmados]);
+  }, [peladaId]);
 
   if (loading) {
     return (
