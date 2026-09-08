@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Pelada da Panela">
+  <defs>
+    <clipPath id="ppBall"><circle cx="0" cy="0" r="100"/></clipPath>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="#111111"/>
+  <g transform="translate(108 128) scale(0.72)">
+    <line x1="86" y1="4" x2="168" y2="-14" stroke="#FF7A2F" stroke-width="26" stroke-linecap="round"/>
+    <g clip-path="url(#ppBall)">
+      <g stroke-width="6" stroke-linejoin="round">
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(-99 -57.16)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(-99 0)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(-99 57.16)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(-49.5 -85.74)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(-49.5 -28.58)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(-49.5 28.58)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(-49.5 85.74)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(0 -57.16)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(0 0)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(0 57.16)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(49.5 -85.74)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(49.5 85.74)" fill="#F5F2EB" stroke="#F5F2EB"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(49.5 -28.58)" fill="#FF7A2F" stroke="#FF7A2F"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(49.5 28.58)" fill="#FF7A2F" stroke="#FF7A2F"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(99 -57.16)" fill="#FF7A2F" stroke="#FF7A2F"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(99 0)" fill="#FF7A2F" stroke="#FF7A2F"/>
+        <polygon points="26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52" transform="translate(99 57.16)" fill="#FF7A2F" stroke="#FF7A2F"/>
+      </g>
+    </g>
+  </g>
+</svg>
