@@ -33,8 +33,7 @@ const PES: { value: Pe; label: string }[] = [
 
 const INPUT =
   "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-const SECTION_LABEL =
-  "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 
 function optionClass(selected: boolean) {
   return [

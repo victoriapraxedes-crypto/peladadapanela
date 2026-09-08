@@ -3,11 +3,12 @@ import { Link } from "@tanstack/react-router";
 
 import { TopBar } from "@/components/layout/TopBar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
 import { POSICAO_LABEL } from "@/features/jogadores/labels";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 import type { Database, Tables } from "@/integrations/supabase/types";
 
 type Posicao = Database["public"]["Enums"]["posicao"];
@@ -59,11 +60,14 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
   const [partidas, setPartidas] = useState<MatchRow[]>([]);
   const [eventos, setEventos] = useState<EventoRow[]>([]);
   const [mvps, setMvps] = useState<string[]>([]);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     async function load() {
       setLoading(true);
+      setErro(false);
 
       const peladaRes = await supabase
         .from("peladas")
@@ -72,6 +76,11 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
         .maybeSingle();
 
       if (!ativo) return;
+      if (peladaRes.error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       if (!peladaRes.data) {
         setPelada(null);
         setLoading(false);
@@ -109,6 +118,17 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
         : { data: [] as unknown[] };
 
       if (!ativo) return;
+      if (
+        presentesRes.error ||
+        timesRes.error ||
+        matchesRes.error ||
+        mvpRes.error ||
+        ("error" in eventosRes && eventosRes.error)
+      ) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
 
       const listaPresentes = (presentesRes.data ?? [])
         .map((r) => r.players)
@@ -172,7 +192,7 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
     return () => {
       ativo = false;
     };
-  }, [peladaId]);
+  }, [peladaId, tentativa]);
 
   const nomeTime = useMemo(() => new Map(times.map((t) => [t.id, t.nome])), [times]);
 
@@ -204,6 +224,17 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
   }, [eventos]);
 
   const temGol = eventos.some((e) => e.tipo === "gol");
+
+  if (erro) {
+    return (
+      <>
+        <TopBar />
+        <div className="mt-4">
+          <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+        </div>
+      </>
+    );
+  }
 
   if (loading) {
     return (
@@ -284,9 +315,7 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
             )}
           </div>
         ) : (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Nenhum gol registrado nesta pelada.
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">Nenhum gol registrado nesta pelada.</p>
         )}
 
         <div className="mt-4 border-t border-border pt-4">

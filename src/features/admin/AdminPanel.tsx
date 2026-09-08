@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 
 type PeladaStatus = Database["public"]["Enums"]["pelada_status"];
 
@@ -87,7 +87,6 @@ export function AdminPanel() {
     };
   }, []);
 
-
   useEffect(() => {
     let ativo = true;
     (async () => {
@@ -144,7 +143,9 @@ export function AdminPanel() {
       <TopBar />
 
       <header className="pt-2">
-        <h1 className="font-display text-2xl font-bold tracking-[-0.02em] text-foreground">Painel</h1>
+        <h1 className="font-display text-2xl font-bold tracking-[-0.02em] text-foreground">
+          Painel
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">Você está como administrador.</p>
       </header>
 
@@ -206,7 +207,9 @@ export function AdminPanel() {
           >
             <acao.icon size={20} className="text-primary" />
             <span className="min-w-0">
-              <span className="block truncate text-sm font-medium text-foreground">{acao.titulo}</span>
+              <span className="block truncate text-sm font-medium text-foreground">
+                {acao.titulo}
+              </span>
               <span className="block truncate text-xs text-muted-foreground">{acao.descricao}</span>
             </span>
             {acao.to === "/admin/acessos" && pendentes > 0 ? (

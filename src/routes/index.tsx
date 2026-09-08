@@ -9,8 +9,7 @@ export const Route = createFileRoute("/")({
       { title: "Pelada da Panela — Início" },
       {
         name: "description",
-        content:
-          "Próxima pelada, confirmados, artilheiro e ranking da turma em um só lugar.",
+        content: "Próxima pelada, confirmados, artilheiro e ranking da turma em um só lugar.",
       },
       { property: "og:title", content: "Pelada da Panela — Início" },
       {

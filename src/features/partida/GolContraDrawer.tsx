@@ -38,7 +38,7 @@ export function GolContraDrawer({ open, onOpenChange, matchId, times }: Props) {
 
   // O ponto do gol contra vai SEMPRE para o time adversário ao do jogador.
   // Se o jogador é do time A, team_id do evento é o time B, e vice-versa.
-  const adversario = time ? times.find((t) => t.id !== time.id) ?? null : null;
+  const adversario = time ? (times.find((t) => t.id !== time.id) ?? null) : null;
 
   function reset() {
     setPasso("time");

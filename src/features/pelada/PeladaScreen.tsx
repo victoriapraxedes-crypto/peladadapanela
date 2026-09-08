@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import { MvpCard } from "@/features/pelada/MvpCard";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 
 type PeladaStatus = Database["public"]["Enums"]["pelada_status"];
 type MatchStatus = Database["public"]["Enums"]["match_status"];
@@ -57,8 +57,7 @@ interface PartidaResumo {
   status: MatchStatus;
 }
 
-const SECTION_LABEL =
-  "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 
 export function PeladaScreen() {
   const { profile } = useAuth();
@@ -79,7 +78,7 @@ export function PeladaScreen() {
   // "Ainda não confirmaram" é derivado: não existe estado "recusado" no banco,
   // a linha em pelada_players existe ou não existe.
   const fetchConfirmados = useCallback(async (peladaId: string) => {
-    const [{ data }, { data: ativos }] = await Promise.all([
+    const [{ data, error: errConf }, { data: ativos, error: errAtivos }] = await Promise.all([
       supabase
         .from("pelada_players")
         .select("player_id, players(id, apelido, foto_url, posicao_principal)")
@@ -90,6 +89,11 @@ export function PeladaScreen() {
         .eq("ativo", true)
         .order("apelido", { ascending: true }),
     ]);
+
+    if (errConf || errAtivos) {
+      setErro(true);
+      return;
+    }
 
     const lista = (data ?? [])
       .filter((row) => row.players)
@@ -183,7 +187,9 @@ export function PeladaScreen() {
           .order("ordem", { ascending: true }),
         supabase
           .from("matches")
-          .select("id, ordem, placar_a, placar_b, status, team_a:team_a_id(nome), team_b:team_b_id(nome)")
+          .select(
+            "id, ordem, placar_a, placar_b, status, team_a:team_a_id(nome), team_b:team_b_id(nome)",
+          )
           .eq("pelada_id", data.id)
           .order("ordem", { ascending: true }),
       ]);
@@ -217,20 +223,27 @@ export function PeladaScreen() {
     };
   }, [hojeISO, fetchConfirmados, tentativa]);
 
+  const fetchConfirmadosRef = useRef(fetchConfirmados);
   useEffect(() => {
-    if (!pelada) return;
+    fetchConfirmadosRef.current = fetchConfirmados;
+  }, [fetchConfirmados]);
+
+  // Um único canal por pelada: a assinatura só depende do id.
+  const peladaId = pelada?.id ?? null;
+  useEffect(() => {
+    if (!peladaId) return;
     const channel = supabase
-      .channel(`pelada_screen:${pelada.id}`)
+      .channel(`pelada_screen:${peladaId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "pelada_players",
-          filter: `pelada_id=eq.${pelada.id}`,
+          filter: `pelada_id=eq.${peladaId}`,
         },
         () => {
-          void fetchConfirmados(pelada.id);
+          void fetchConfirmadosRef.current(peladaId);
         },
       )
       .subscribe();
@@ -238,7 +251,7 @@ export function PeladaScreen() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [pelada, fetchConfirmados]);
+  }, [peladaId]);
 
   if (erro) {
     return (

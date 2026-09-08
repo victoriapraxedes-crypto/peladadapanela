@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 
 type Posicao = Database["public"]["Enums"]["posicao"];
 
@@ -32,8 +32,7 @@ const NOMES_TIMES = ["Time A", "Time B", "Time C", "Time D"];
 
 const INPUT =
   "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-const SECTION_LABEL =
-  "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 const BTN_PRIMARY =
   "flex h-[52px] items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim disabled:opacity-50";
 const BTN_SECONDARY =
@@ -315,9 +314,7 @@ export function AdminTimesScreen() {
     confirmados.filter((j) => (alocacao[j.id] ?? DISPONIVEIS) === destino);
 
   const selecionadoJogador = confirmados.find((j) => j.id === selecionado) ?? null;
-  const destinoAtualSelecionado = selecionado
-    ? alocacao[selecionado] ?? DISPONIVEIS
-    : null;
+  const destinoAtualSelecionado = selecionado ? (alocacao[selecionado] ?? DISPONIVEIS) : null;
 
   const linhaJogador = (j: Jogador) => (
     <li

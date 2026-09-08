@@ -5,7 +5,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FOCUS_RING } from "@/lib/ui";
 

@@ -8,7 +8,10 @@ export const Route = createFileRoute("/admin/times")({
   head: () => ({
     meta: [
       { title: "Montar times — Pelada da Panela" },
-      { name: "description", content: "Distribuir os confirmados nos times e começar as partidas." },
+      {
+        name: "description",
+        content: "Distribuir os confirmados nos times e começar as partidas.",
+      },
       { property: "og:title", content: "Montar times — Pelada da Panela" },
       { property: "og:description", content: "Distribuir os confirmados nos times." },
     ],

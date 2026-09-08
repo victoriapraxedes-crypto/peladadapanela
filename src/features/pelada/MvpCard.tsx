@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { InitialsAvatar } from "@/components/layout/Avatar";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 
 // Decisão de produto: a /pelada mostra sempre a PRÓXIMA pelada em aberto, então
 // uma pelada finalizada nunca apareceria aqui e a votação de MVP ficaria
@@ -24,8 +24,7 @@ import { formatDataPorExtenso } from "@/lib/mock";
 // convite para votar acompanha a pessoa até ela votar, mesmo que a próxima
 // pelada já esteja marcada.
 
-const SECTION_LABEL =
-  "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 
 interface Participante {
   id: string;
@@ -67,6 +66,7 @@ export function MvpCard() {
   const [loading, setLoading] = useState(true);
   const [alvo, setAlvo] = useState<Participante | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const montadoRef = useRef(true);
 
   const carregar = useCallback(async () => {
     if (!playerId) {
@@ -117,6 +117,7 @@ export function MvpCard() {
 
     const meu = (votos ?? []).find((v) => v.voter_player_id === playerId);
 
+    if (!montadoRef.current) return;
     setDados({
       peladaId: alvoPelada.id,
       data: alvoPelada.data,
@@ -129,8 +130,12 @@ export function MvpCard() {
   }, [playerId]);
 
   useEffect(() => {
+    montadoRef.current = true;
     setLoading(true);
     void carregar();
+    return () => {
+      montadoRef.current = false;
+    };
   }, [carregar]);
 
   const votar = async () => {

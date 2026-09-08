@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, ChevronRight, Users, History } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FOCUS_RING } from "@/lib/ui";
 
@@ -215,20 +215,27 @@ function NextPeladaCard() {
     };
   }, [hojeISO, fetchConfirmados, tentativa]);
 
+  const fetchConfirmadosRef = useRef(fetchConfirmados);
   useEffect(() => {
-    if (!pelada) return;
+    fetchConfirmadosRef.current = fetchConfirmados;
+  }, [fetchConfirmados]);
+
+  // Um único canal por pelada: a assinatura só depende do id.
+  const peladaId = pelada?.id ?? null;
+  useEffect(() => {
+    if (!peladaId) return;
     const channel = supabase
-      .channel(`pelada_players:${pelada.id}`)
+      .channel(`pelada_players:${peladaId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "pelada_players",
-          filter: `pelada_id=eq.${pelada.id}`,
+          filter: `pelada_id=eq.${peladaId}`,
         },
         () => {
-          void fetchConfirmados(pelada.id);
+          void fetchConfirmadosRef.current(peladaId);
         },
       )
       .subscribe();
@@ -236,7 +243,7 @@ function NextPeladaCard() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [pelada, fetchConfirmados]);
+  }, [peladaId]);
 
   if (loading) {
     return (
@@ -327,7 +334,9 @@ function NextPeladaCard() {
       </div>
 
       {total === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">Ninguém confirmou ainda. Seja o primeiro.</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Ninguém confirmou ainda. Seja o primeiro.
+        </p>
       ) : (
         <div className="mt-3 flex items-center">
           {visiveis.map((c, i) => (
@@ -363,11 +372,7 @@ function NextPeladaCard() {
         )}
       >
         {!enviando && confirmado && <Check size={18} className="text-success" />}
-        {enviando
-          ? "Confirmando..."
-          : confirmado
-            ? "Presença confirmada"
-            : "Confirmar presença"}
+        {enviando ? "Confirmando..." : confirmado ? "Presença confirmada" : "Confirmar presença"}
       </button>
     </CardFrame>
   );
