@@ -61,7 +61,8 @@ function useDadosHome() {
         .limit(1)
         .maybeSingle();
 
-      const [{ data: statRows }, { data: playerRows }, { data: winnerRows }] = await Promise.all([
+      const [{ data: statRows }, { data: playerRows }, { data: winnerRows }, { data: peladaRows }] =
+        await Promise.all([
         season
           ? supabase
               .from("player_stats")
@@ -69,10 +70,12 @@ function useDadosHome() {
               .eq("season_id", season.id)
           : Promise.resolve({ data: [] as never[] }),
         supabase.from("players").select("id, apelido, foto_url"),
+        supabase.from("mvp_winners").select("player_id, pelada_id"),
         supabase
-          .from("mvp_winners")
-          .select("player_id, pelada_id, peladas!inner(data, status)")
-          .eq("peladas.status", "finalizada"),
+          .from("peladas")
+          .select("id, data")
+          .eq("status", "finalizada")
+          .order("data", { ascending: false }),
       ]);
 
       if (!ativo) return;
@@ -93,17 +96,21 @@ function useDadosHome() {
           participacoesEmGols: s.participacoes_em_gols ?? 0,
         }));
 
-      const winners = (winnerRows ?? [])
-        .filter((w) => w.player_id && w.peladas)
-        .sort((a, b) => (a.peladas!.data < b.peladas!.data ? 1 : -1));
-      const topWinner = winners[0];
+      // peladas já vêm da mais recente para a mais antiga; pega a primeira que tem vencedor
+      const peladaComMvp = (peladaRows ?? []).find((pl) =>
+        (winnerRows ?? []).some((w) => w.pelada_id === pl.id && w.player_id),
+      );
+      const vencedor = peladaComMvp
+        ? (winnerRows ?? []).find((w) => w.pelada_id === peladaComMvp.id && w.player_id)
+        : undefined;
 
       setDados({
         stats,
         players,
-        mvp: topWinner
-          ? { playerId: topWinner.player_id as string, data: topWinner.peladas!.data }
-          : null,
+        mvp:
+          peladaComMvp && vencedor
+            ? { playerId: vencedor.player_id as string, data: peladaComMvp.data }
+            : null,
       });
     })();
     return () => {
