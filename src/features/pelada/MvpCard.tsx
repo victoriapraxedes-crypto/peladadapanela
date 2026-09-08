@@ -80,9 +80,7 @@ export function MvpCard() {
       .from("pelada_players")
       .select("pelada_id, peladas!inner(id, data, status)")
       .eq("player_id", playerId)
-      .eq("peladas.status", "finalizada")
-      .order("data", { ascending: false, referencedTable: "peladas" })
-      .limit(50);
+      .eq("peladas.status", "finalizada");
 
     const ordenadas = (minhas ?? [])
       .filter((r) => r.peladas)
