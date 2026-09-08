@@ -225,6 +225,17 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
 
   const temGol = eventos.some((e) => e.tipo === "gol");
 
+  if (erro) {
+    return (
+      <>
+        <TopBar />
+        <div className="mt-4">
+          <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+        </div>
+      </>
+    );
+  }
+
   if (loading) {
     return (
       <>
