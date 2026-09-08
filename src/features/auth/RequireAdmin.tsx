@@ -11,6 +11,7 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   const { session, player, profile, loading } = useAuth();
   const navigate = useNavigate();
   const isAdmin = profile?.role === "admin";
+  const aprovado = profile?.acesso === "aprovado";
 
   useEffect(() => {
     if (loading) return;
@@ -18,11 +19,13 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
       navigate({ to: "/login" });
     } else if (!player) {
       navigate({ to: "/onboarding" });
+    } else if (!aprovado) {
+      navigate({ to: "/aguardando" });
     } else if (!isAdmin) {
       navigate({ to: "/" });
     }
-  }, [loading, session, player, isAdmin, navigate]);
+  }, [loading, session, player, aprovado, isAdmin, navigate]);
 
-  if (loading || !session || !player || !isAdmin) return <AuthLoading />;
+  if (loading || !session || !player || !aprovado || !isAdmin) return <AuthLoading />;
   return <>{children}</>;
 }
