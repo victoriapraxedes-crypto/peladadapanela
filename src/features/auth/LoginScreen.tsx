@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { useAuth } from "@/features/auth/AuthProvider";
 
@@ -28,18 +28,23 @@ function GoogleIcon({ size = 20 }: { size?: number }) {
 
 export function LoginScreen() {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/login" }) as { next?: string };
+  const proximo =
+    search.next && search.next.startsWith("/") && !search.next.startsWith("//") ? search.next : null;
   const { session, loading, signInWithGoogle } = useAuth();
   const [entrando, setEntrando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: "/" });
-  }, [loading, session, navigate]);
+    if (loading || !session) return;
+    if (proximo) window.location.replace(proximo);
+    else navigate({ to: "/" });
+  }, [loading, session, navigate, proximo]);
 
   const handleGoogle = async () => {
     setEntrando(true);
     setErro(null);
-    const { error } = await signInWithGoogle();
+    const { error } = await signInWithGoogle(proximo ?? undefined);
     if (error) {
       setErro(error);
       setEntrando(false);
