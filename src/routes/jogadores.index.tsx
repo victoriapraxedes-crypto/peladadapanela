@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, ComingSoon } from "@/components/layout/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
+import { RequireAuth } from "@/features/auth/RequireAuth";
+import { JogadoresScreen } from "@/features/jogadores/JogadoresScreen";
 
 export const Route = createFileRoute("/jogadores/")({
   head: () => ({
@@ -11,11 +13,10 @@ export const Route = createFileRoute("/jogadores/")({
     ],
   }),
   component: () => (
-    <AppShell>
-      <ComingSoon
-        title="Jogadores"
-        description="Aqui você vai ver o elenco completo da pelada, com posição e estatísticas de cada um."
-      />
-    </AppShell>
+    <RequireAuth>
+      <AppShell>
+        <JogadoresScreen />
+      </AppShell>
+    </RequireAuth>
   ),
 });
