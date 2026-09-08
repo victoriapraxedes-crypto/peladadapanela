@@ -242,7 +242,7 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
       {header}
 
       {/* Destaque */}
-      <div className="grid grid-cols-3 rounded-2xl border border-border bg-surface p-5">
+      <div className="grid grid-cols-3 gap-2 rounded-2xl border border-border bg-surface p-4 sm:p-5">
         {(
           [
             ["Jogos", n(minhas?.jogos)],
@@ -250,9 +250,9 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
             ["Assistências", n(minhas?.assistencias)],
           ] as const
         ).map(([label, valor]) => (
-          <div key={label} className="flex flex-col items-center gap-1">
+          <div key={label} className="flex min-w-0 flex-col items-center gap-1">
             <span className="num text-3xl text-foreground">{valor}</span>
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            <span className="w-full truncate text-center text-[10px] uppercase tracking-wide text-muted-foreground">
               {label}
             </span>
           </div>
@@ -277,6 +277,7 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
                 periodo === id
                   ? "border-primary bg-surface-2 text-foreground"
                   : "border-border bg-transparent text-muted-foreground hover:border-primary/40",
+                FOCUS_RING,
               )}
             >
               {label}
