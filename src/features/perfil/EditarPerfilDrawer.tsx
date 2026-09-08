@@ -190,7 +190,7 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
                 className="h-24 w-24 rounded-full object-cover"
               />
             ) : (
-              <InitialsAvatar name={apelido || nome} size={96} />
+              <InitialsAvatar apelido={apelido || nome} size={96} />
             )}
             <button
               type="button"
