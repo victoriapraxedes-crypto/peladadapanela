@@ -20,6 +20,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminJogadoresRouteImport } from './routes/admin.jogadores'
 import { Route as AdminPeladaRouteImport } from './routes/admin.pelada'
 import { Route as AdminTimesRouteImport } from './routes/admin.times'
+import { Route as HistoricoIndexRouteImport } from './routes/historico.index'
 import { Route as JogadoresIndexRouteImport } from './routes/jogadores.index'
 import { Route as JogadoresIdRouteImport } from './routes/jogadores.$id'
 import { Route as PartidaIdRouteImport } from './routes/partida.$id'
@@ -79,6 +80,11 @@ const AdminTimesRoute = AdminTimesRouteImport.update({
   path: '/admin/times',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HistoricoIndexRoute = HistoricoIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => HistoricoRoute,
+} as any)
 const JogadoresIndexRoute = JogadoresIndexRouteImport.update({
   id: '/jogadores/',
   path: '/jogadores/',
@@ -97,7 +103,7 @@ const PartidaIdRoute = PartidaIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/historico': typeof HistoricoRoute
+  '/historico': typeof HistoricoRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
@@ -109,11 +115,11 @@ export interface FileRoutesByFullPath {
   '/jogadores/$id': typeof JogadoresIdRoute
   '/partida/$id': typeof PartidaIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/historico/': typeof HistoricoIndexRoute
   '/jogadores/': typeof JogadoresIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
@@ -125,12 +131,13 @@ export interface FileRoutesByTo {
   '/jogadores/$id': typeof JogadoresIdRoute
   '/partida/$id': typeof PartidaIdRoute
   '/admin': typeof AdminIndexRoute
+  '/historico': typeof HistoricoIndexRoute
   '/jogadores': typeof JogadoresIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/historico': typeof HistoricoRoute
+  '/historico': typeof HistoricoRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
@@ -142,6 +149,7 @@ export interface FileRoutesById {
   '/jogadores/$id': typeof JogadoresIdRoute
   '/partida/$id': typeof PartidaIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/historico/': typeof HistoricoIndexRoute
   '/jogadores/': typeof JogadoresIndexRoute
 }
 export interface FileRouteTypes {
@@ -160,11 +168,11 @@ export interface FileRouteTypes {
     | '/jogadores/$id'
     | '/partida/$id'
     | '/admin/'
+    | '/historico/'
     | '/jogadores/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/historico'
     | '/login'
     | '/onboarding'
     | '/pelada'
@@ -176,6 +184,7 @@ export interface FileRouteTypes {
     | '/jogadores/$id'
     | '/partida/$id'
     | '/admin'
+    | '/historico'
     | '/jogadores'
   id:
     | '__root__'
@@ -192,12 +201,13 @@ export interface FileRouteTypes {
     | '/jogadores/$id'
     | '/partida/$id'
     | '/admin/'
+    | '/historico/'
     | '/jogadores/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  HistoricoRoute: typeof HistoricoRoute
+  HistoricoRoute: typeof HistoricoRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PeladaRoute: typeof PeladaRoute
@@ -291,6 +301,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTimesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/historico/': {
+      id: '/historico/'
+      path: '/'
+      fullPath: '/historico/'
+      preLoaderRoute: typeof HistoricoIndexRouteImport
+      parentRoute: typeof HistoricoRoute
+    }
     '/jogadores/': {
       id: '/jogadores/'
       path: '/jogadores'
@@ -315,9 +332,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface HistoricoRouteChildren {
+  HistoricoIndexRoute: typeof HistoricoIndexRoute
+}
+
+const HistoricoRouteChildren: HistoricoRouteChildren = {
+  HistoricoIndexRoute: HistoricoIndexRoute,
+}
+
+const HistoricoRouteWithChildren = HistoricoRoute._addFileChildren(
+  HistoricoRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  HistoricoRoute: HistoricoRoute,
+  HistoricoRoute: HistoricoRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PeladaRoute: PeladaRoute,
