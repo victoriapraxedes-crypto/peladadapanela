@@ -1,3 +1,6 @@
+import { Link } from "@tanstack/react-router";
+import { Shield } from "lucide-react";
+
 import { Logo } from "@/components/brand/Logo";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -11,6 +14,15 @@ export function TopBar() {
     <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4">
       <Logo size={32} />
       <div className="flex min-w-0 items-center gap-2">
+        {profile?.role === "admin" && (
+          <Link
+            to="/admin"
+            aria-label="Painel admin"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-primary"
+          >
+            <Shield size={18} />
+          </Link>
+        )}
         <span className="truncate text-sm font-medium text-muted-foreground">{apelido}</span>
         {avatarUrl ? (
           <img
