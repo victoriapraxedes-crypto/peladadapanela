@@ -202,13 +202,20 @@ export function AdminPanel() {
           <Link
             key={acao.titulo}
             to={acao.to}
-            className="grid min-h-[64px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 py-3"
+            className="grid min-h-[64px] grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 py-3"
           >
             <acao.icon size={20} className="text-primary" />
             <span className="min-w-0">
               <span className="block truncate text-sm font-medium text-foreground">{acao.titulo}</span>
               <span className="block truncate text-xs text-muted-foreground">{acao.descricao}</span>
             </span>
+            {acao.to === "/admin/acessos" && pendentes > 0 ? (
+              <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                {pendentes}
+              </span>
+            ) : (
+              <span />
+            )}
             <ChevronRight size={18} className="text-muted-foreground" />
           </Link>
         ))}
