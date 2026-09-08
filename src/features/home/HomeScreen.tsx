@@ -156,6 +156,8 @@ function NextPeladaCard() {
   const [confirmados, setConfirmados] = useState<Confirmado[]>([]);
   const [loading, setLoading] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   const hojeISO = new Date().toISOString().slice(0, 10);
 
@@ -177,7 +179,8 @@ function NextPeladaCard() {
     let ativo = true;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      setErro(false);
+      const { data, error } = await supabase
         .from("peladas")
         .select("id, data, horario, local, seasons(nome)")
         .gte("data", hojeISO)
@@ -187,6 +190,13 @@ function NextPeladaCard() {
         .maybeSingle();
 
       if (!ativo) return;
+      if (error) {
+        setErro(true);
+        setPelada(null);
+        setConfirmados([]);
+        setLoading(false);
+        return;
+      }
       if (!data) {
         setPelada(null);
         setConfirmados([]);
