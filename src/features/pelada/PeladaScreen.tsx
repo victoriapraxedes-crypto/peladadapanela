@@ -292,7 +292,11 @@ export function PeladaScreen() {
             {confirmados.map((c) => (
               <li
                 key={c.id}
-                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0"
+                className={`grid items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0 ${
+                  isAdmin
+                    ? "grid-cols-[auto_minmax(0,1fr)_auto_auto]"
+                    : "grid-cols-[auto_minmax(0,1fr)_auto]"
+                }`}
               >
                 {c.fotoUrl ? (
                   <img
@@ -308,11 +312,68 @@ export function PeladaScreen() {
                 )}
                 <span className="truncate text-sm text-foreground">{c.apelido}</span>
                 <span className="text-xs text-muted-foreground">{POSICAO_LABEL[c.posicao]}</span>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    aria-label={"Remover " + c.apelido}
+                    disabled={presencaBusyId === c.id}
+                    onClick={() => void removerPresenca(pelada.id, c)}
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-destructive disabled:opacity-50"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      {isAdmin && (
+        <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className={SECTION_LABEL}>Ainda não confirmaram</p>
+            <span className="num text-2xl text-foreground">{naoConfirmados.length}</span>
+          </div>
+
+          {naoConfirmados.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">Todo mundo já confirmou.</p>
+          ) : (
+            <ul className="mt-3">
+              {naoConfirmados.map((c) => (
+                <li
+                  key={c.id}
+                  className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0"
+                >
+                  {c.fotoUrl ? (
+                    <img
+                      src={c.fotoUrl}
+                      alt={c.apelido}
+                      width={36}
+                      height={36}
+                      referrerPolicy="no-referrer"
+                      className="h-9 w-9 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <InitialsAvatar apelido={c.apelido} size={36} />
+                  )}
+                  <span className="truncate text-sm text-foreground">{c.apelido}</span>
+                  <span className="text-xs text-muted-foreground">{POSICAO_LABEL[c.posicao]}</span>
+                  <button
+                    type="button"
+                    aria-label={"Adicionar " + c.apelido}
+                    disabled={presencaBusyId === c.id}
+                    onClick={() => void adicionarPresenca(pelada.id, c)}
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-primary disabled:opacity-50"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       <section className="mt-5">
         <p className={SECTION_LABEL}>Times</p>
