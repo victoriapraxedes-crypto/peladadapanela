@@ -53,6 +53,7 @@ export function LoginScreen() {
 
         <h1 className="mt-6 text-center font-display text-3xl font-bold uppercase leading-tight tracking-[-0.02em] text-foreground">
           Pelada da <span className="text-primary">Panela</span>
+          <span className="sr-only"> — organização da pelada de futebol da turma</span>
         </h1>
         <p className="mt-3 text-center text-sm text-muted-foreground">
           A pelada dos amigos, organizada de verdade.
