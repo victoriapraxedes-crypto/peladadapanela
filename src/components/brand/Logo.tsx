@@ -5,26 +5,26 @@ interface LogoProps {
 }
 
 const CELLS: { x: number; y: number; orange: boolean }[] = [
-  { x: -99, y: -57.16, orange: false },
-  { x: -99, y: 0, orange: false },
-  { x: -99, y: 57.16, orange: false },
-  { x: -49.5, y: -85.74, orange: false },
-  { x: -49.5, y: -28.58, orange: false },
-  { x: -49.5, y: 28.58, orange: false },
-  { x: -49.5, y: 85.74, orange: false },
-  { x: 0, y: -57.16, orange: false },
+  { x: -132, y: -76.21, orange: false },
+  { x: -132, y: 0, orange: false },
+  { x: -132, y: 76.21, orange: false },
+  { x: -66, y: -114.32, orange: false },
+  { x: -66, y: -38.11, orange: false },
+  { x: -66, y: 38.11, orange: false },
+  { x: -66, y: 114.32, orange: false },
+  { x: 0, y: -76.21, orange: false },
   { x: 0, y: 0, orange: false },
-  { x: 0, y: 57.16, orange: false },
-  { x: 49.5, y: -85.74, orange: false },
-  { x: 49.5, y: 85.74, orange: false },
-  { x: 49.5, y: -28.58, orange: true },
-  { x: 49.5, y: 28.58, orange: true },
-  { x: 99, y: -57.16, orange: true },
-  { x: 99, y: 0, orange: true },
-  { x: 99, y: 57.16, orange: true },
+  { x: 0, y: 76.21, orange: false },
+  { x: 66, y: -114.32, orange: false },
+  { x: 66, y: 114.32, orange: false },
+  { x: 66, y: -38.11, orange: true },
+  { x: 66, y: 38.11, orange: true },
+  { x: 132, y: -76.21, orange: true },
+  { x: 132, y: 0, orange: true },
+  { x: 132, y: 76.21, orange: true },
 ];
 
-const HEX = "26,0 13,22.52 -13,22.52 -26,0 -13,-22.52 13,-22.52";
+const HEX = "37,0 18.5,32.04 -18.5,32.04 -37,0 -18.5,-32.04 18.5,-32.04";
 const OFF_WHITE = "#F5F2EB";
 const ORANGE = "#FF7A2F";
 
@@ -48,12 +48,12 @@ export function Logo({ size = 48, withBackground = false, className }: LogoProps
       {withBackground && <rect width="256" height="256" rx="56" fill="#111111" />}
       <g transform="translate(108 128) scale(0.72)">
         <line
-          x1="86"
+          x1="88"
           y1="4"
-          x2="168"
+          x2="170"
           y2="-14"
           stroke={ORANGE}
-          strokeWidth="26"
+          strokeWidth="28"
           strokeLinecap="round"
         />
         <g clipPath={`url(#${clipId})`}>
