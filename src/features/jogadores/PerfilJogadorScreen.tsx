@@ -144,6 +144,15 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
     };
   }, [stats, playerId]);
 
+  if (erro) {
+    return (
+      <div className="flex flex-col gap-5">
+        <TopBar />
+        <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col gap-5">
@@ -167,7 +176,10 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
           <p className="text-sm text-muted-foreground">Jogador não encontrado.</p>
           <Link
             to="/jogadores"
-            className="inline-flex min-h-[44px] items-center rounded-xl border border-border px-4 text-sm text-foreground"
+            className={cn(
+              "inline-flex min-h-[44px] items-center rounded-xl border border-border px-4 text-sm text-foreground transition-colors hover:border-primary/40",
+              FOCUS_RING,
+            )}
           >
             Ver jogadores
           </Link>
