@@ -43,6 +43,14 @@ export function AdminAcessosScreen() {
   const [salvandoId, setSalvandoId] = useState<string | null>(null);
   const [recusarAlvo, setRecusarAlvo] = useState<Solicitacao | null>(null);
 
+  const montadoRef = useRef(true);
+  useEffect(() => {
+    montadoRef.current = true;
+    return () => {
+      montadoRef.current = false;
+    };
+  }, []);
+
   const carregar = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -50,6 +58,7 @@ export function AdminAcessosScreen() {
       .select("id, nome, email, avatar_url, criado_em")
       .eq("acesso", filtro)
       .order("criado_em", { ascending: true });
+    if (!montadoRef.current) return;
     if (error) toast.error("Não foi possível carregar as solicitações. " + error.message);
     setLista((data as Solicitacao[]) ?? []);
     setLoading(false);

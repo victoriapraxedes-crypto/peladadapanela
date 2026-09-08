@@ -116,6 +116,7 @@ export function MvpCard() {
 
     const meu = (votos ?? []).find((v) => v.voter_player_id === playerId);
 
+    if (!montadoRef.current) return;
     setDados({
       peladaId: alvoPelada.id,
       data: alvoPelada.data,
@@ -128,8 +129,12 @@ export function MvpCard() {
   }, [playerId]);
 
   useEffect(() => {
+    montadoRef.current = true;
     setLoading(true);
     void carregar();
+    return () => {
+      montadoRef.current = false;
+    };
   }, [carregar]);
 
   const votar = async () => {
