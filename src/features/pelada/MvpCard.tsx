@@ -240,7 +240,7 @@ export function MvpCard() {
                 void votar();
               }}
             >
-              Confirmar voto
+              {enviando ? "Confirmando..." : "Confirmar voto"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

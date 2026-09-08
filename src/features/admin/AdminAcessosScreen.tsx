@@ -15,6 +15,8 @@ import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 import type { Database } from "@/integrations/supabase/types";
 
 type Acesso = Database["public"]["Enums"]["acesso_status"];
@@ -133,16 +135,22 @@ export function AdminAcessosScreen() {
                   type="button"
                   disabled={salvandoId !== null}
                   onClick={() => void alterar(p, "aprovado")}
-                  className="flex h-12 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim disabled:opacity-50"
+                  className={cn(
+                    "flex h-12 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground transition-colors hover:bg-primary-dim disabled:opacity-50",
+                    FOCUS_RING,
+                  )}
                 >
-                  Aprovar
+                  {salvandoId === p.id ? "Aprovando..." : "Aprovar"}
                 </button>
                 {filtro === "pendente" && (
                   <button
                     type="button"
                     disabled={salvandoId !== null}
                     onClick={() => setRecusarAlvo(p)}
-                    className="flex h-12 items-center justify-center rounded-xl border border-destructive/40 bg-transparent text-sm font-medium text-destructive disabled:opacity-50"
+                    className={cn(
+                      "flex h-12 items-center justify-center rounded-xl border border-destructive/40 bg-transparent text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50",
+                      FOCUS_RING,
+                    )}
                   >
                     Recusar
                   </button>
@@ -156,7 +164,10 @@ export function AdminAcessosScreen() {
       <button
         type="button"
         onClick={() => setFiltro((f) => (f === "pendente" ? "recusado" : "pendente"))}
-        className="mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-border bg-transparent text-sm font-medium text-foreground"
+        className={cn(
+          "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-border bg-transparent text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+          FOCUS_RING,
+        )}
       >
         {filtro === "pendente" ? "Ver recusados" : "Ver pendentes"}
       </button>
@@ -176,9 +187,12 @@ export function AdminAcessosScreen() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               disabled={salvandoId !== null}
-              onClick={() => recusarAlvo && void alterar(recusarAlvo, "recusado")}
+              onClick={(event) => {
+                event.preventDefault();
+                if (recusarAlvo) void alterar(recusarAlvo, "recusado");
+              }}
             >
-              Recusar
+              {salvandoId !== null ? "Recusando..." : "Recusar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
