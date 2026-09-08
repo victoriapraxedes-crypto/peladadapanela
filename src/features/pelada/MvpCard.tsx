@@ -142,7 +142,7 @@ export function MvpCard() {
       voted_player_id: alvo.id,
     });
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível registrar seu voto. " + error.message);
     } else {
       toast.success(`Voto em ${alvo.apelido} registrado.`);
       await carregar();
@@ -240,7 +240,7 @@ export function MvpCard() {
                 void votar();
               }}
             >
-              Confirmar voto
+              {enviando ? "Confirmando..." : "Confirmar voto"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

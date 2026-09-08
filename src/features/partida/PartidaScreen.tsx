@@ -4,7 +4,10 @@ import { CircleDot } from "lucide-react";
 import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +55,7 @@ export function PartidaScreen({ id }: { id: string }) {
   const [partida, setPartida] = useState<Partida | null>(null);
   const [eventos, setEventos] = useState<EventoPartida[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
 
   const [golAberto, setGolAberto] = useState(false);
   const [golContraAberto, setGolContraAberto] = useState(false);
@@ -61,13 +65,19 @@ export function PartidaScreen({ id }: { id: string }) {
   const [ocupado, setOcupado] = useState(false);
 
   const carregar = useCallback(async () => {
-    const { data } = await supabase
+    setErro(false);
+    const { data, error } = await supabase
       .from("matches")
       .select(
         "id, placar_a, placar_b, status, inicio_em, team_a_id, team_b_id, team_a:team_a_id(nome), team_b:team_b_id(nome)",
       )
       .eq("id", id)
       .maybeSingle();
+
+    if (error) {
+      setErro(true);
+      return;
+    }
 
     if (!data) {
       setPartida(null);
@@ -166,6 +176,21 @@ export function PartidaScreen({ id }: { id: string }) {
     };
   }, [id]);
 
+  if (erro) {
+    return (
+      <>
+        <TopBar />
+        <div className="mt-4">
+          <ErroCarregamento
+            onRetry={() => {
+              void carregarRef.current?.();
+            }}
+          />
+        </div>
+      </>
+    );
+  }
+
   if (loading) {
     return (
       <>
@@ -206,7 +231,7 @@ export function PartidaScreen({ id }: { id: string }) {
     setOcupado(false);
     setDesfazerAberto(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível desfazer o evento. " + error.message);
       return;
     }
     toast.success("Último evento desfeito.");
@@ -222,7 +247,7 @@ export function PartidaScreen({ id }: { id: string }) {
     setOcupado(false);
     setEncerrarAberto(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível encerrar a partida. " + error.message);
       return;
     }
     toast.success("Partida encerrada.");
@@ -238,16 +263,16 @@ export function PartidaScreen({ id }: { id: string }) {
       </p>
 
       <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-          <h2 className="truncate text-center font-display text-base font-semibold text-foreground">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+          <h2 className="truncate text-center font-display text-sm font-semibold text-foreground sm:text-base">
             {partida.timeA.nome}
           </h2>
-          <p className="num text-6xl leading-none text-foreground">
+          <p className="num shrink-0 whitespace-nowrap text-4xl leading-none text-foreground sm:text-6xl">
             {partida.placarA}
-            <span className="mx-2 text-muted-foreground">–</span>
+            <span className="mx-1 text-muted-foreground sm:mx-2">–</span>
             {partida.placarB}
           </p>
-          <h2 className="truncate text-center font-display text-base font-semibold text-foreground">
+          <h2 className="truncate text-center font-display text-sm font-semibold text-foreground sm:text-base">
             {partida.timeB.nome}
           </h2>
         </div>
@@ -319,7 +344,10 @@ export function PartidaScreen({ id }: { id: string }) {
                     <button
                       type="button"
                       onClick={() => setEventoEditando(e)}
-                      className="flex min-h-[56px] w-full items-center gap-3 py-3 text-left"
+                      className={cn(
+                        "flex min-h-[56px] w-full items-center gap-3 rounded-lg py-3 text-left transition-colors hover:text-primary",
+                        FOCUS_RING,
+                      )}
                     >
                       {conteudo}
                     </button>
@@ -339,7 +367,10 @@ export function PartidaScreen({ id }: { id: string }) {
         <button
           type="button"
           onClick={() => setEncerrarAberto(true)}
-          className="mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-destructive/40 bg-transparent text-sm font-medium text-destructive"
+          className={cn(
+            "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-destructive/40 bg-transparent text-sm font-medium text-destructive transition-colors hover:bg-destructive/10",
+            FOCUS_RING,
+          )}
         >
           Encerrar partida
         </button>
@@ -401,7 +432,7 @@ export function PartidaScreen({ id }: { id: string }) {
                     void desfazer();
                   }}
                 >
-                  Desfazer
+                  {ocupado ? "Desfazendo..." : "Desfazer"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -425,7 +456,7 @@ export function PartidaScreen({ id }: { id: string }) {
                     void encerrar();
                   }}
                 >
-                  Encerrar
+                  {ocupado ? "Encerrando..." : "Encerrar"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

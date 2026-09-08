@@ -46,7 +46,7 @@ function optionClass(selected: boolean, disabled = false) {
 }
 
 const INPUT_CLASS =
-  "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none focus:border-primary";
+  "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 interface Props {
   open: boolean;
@@ -119,7 +119,7 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
       .upload(caminho, file, { upsert: false, contentType: file.type });
 
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível enviar a foto. " + error.message);
       setEnviandoFoto(false);
       return;
     }
@@ -162,7 +162,7 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
       .eq("id", player.id);
 
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível salvar o perfil. " + error.message);
       setSalvando(false);
       return;
     }

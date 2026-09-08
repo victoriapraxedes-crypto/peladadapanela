@@ -6,7 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FOCUS_RING } from "@/lib/ui";
 import { formatDataPorExtenso } from "@/lib/mock";
 import { PE_LABEL, POSICAO_LABEL } from "@/features/jogadores/labels";
 
@@ -43,11 +45,14 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
   const [stats, setStats] = useState<StatsRow[]>([]);
   const [periodo, setPeriodo] = useState<Periodo>("temporada");
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     async function load() {
       setLoading(true);
+      setErro(false);
       // 3 requisições: jogador, temporada ativa e peladas (join único).
       const playerRes = await supabase.from("players").select("*").eq("id", playerId).maybeSingle();
       const seasonRes = await supabase.from("seasons").select("id").eq("ativa", true).maybeSingle();
@@ -59,6 +64,11 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
         .order("data", { referencedTable: "peladas", ascending: false })
         .limit(5);
       if (!ativo) return;
+      if (playerRes.error || seasonRes.error || peladasRes.error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       setPlayer(playerRes.data ?? null);
       setSeasonId(seasonRes.data?.id ?? null);
       const linhas = (peladasRes.data ?? []) as unknown as { peladas: PeladaRow }[];
@@ -75,7 +85,7 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
     return () => {
       ativo = false;
     };
-  }, [playerId]);
+  }, [playerId, tentativa]);
 
   useEffect(() => {
     let ativo = true;
@@ -134,6 +144,15 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
     };
   }, [stats, playerId]);
 
+  if (erro) {
+    return (
+      <div className="flex flex-col gap-5">
+        <TopBar />
+        <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col gap-5">
@@ -157,7 +176,10 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
           <p className="text-sm text-muted-foreground">Jogador não encontrado.</p>
           <Link
             to="/jogadores"
-            className="inline-flex min-h-[44px] items-center rounded-xl border border-border px-4 text-sm text-foreground"
+            className={cn(
+              "inline-flex min-h-[44px] items-center rounded-xl border border-border px-4 text-sm text-foreground transition-colors hover:border-primary/40",
+              FOCUS_RING,
+            )}
           >
             Ver jogadores
           </Link>
@@ -220,7 +242,7 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
       {header}
 
       {/* Destaque */}
-      <div className="grid grid-cols-3 rounded-2xl border border-border bg-surface p-5">
+      <div className="grid grid-cols-3 gap-2 rounded-2xl border border-border bg-surface p-4 sm:p-5">
         {(
           [
             ["Jogos", n(minhas?.jogos)],
@@ -228,9 +250,9 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
             ["Assistências", n(minhas?.assistencias)],
           ] as const
         ).map(([label, valor]) => (
-          <div key={label} className="flex flex-col items-center gap-1">
+          <div key={label} className="flex min-w-0 flex-col items-center gap-1">
             <span className="num text-3xl text-foreground">{valor}</span>
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            <span className="w-full truncate text-center text-[10px] uppercase tracking-wide text-muted-foreground">
               {label}
             </span>
           </div>
@@ -255,6 +277,7 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
                 periodo === id
                   ? "border-primary bg-surface-2 text-foreground"
                   : "border-border bg-transparent text-muted-foreground hover:border-primary/40",
+                FOCUS_RING,
               )}
             >
               {label}

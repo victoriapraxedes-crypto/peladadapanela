@@ -132,7 +132,7 @@ export function AdminPanel() {
     setEncerrando(false);
     setConfirmarEncerrar(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível encerrar a pelada. " + error.message);
       return;
     }
     toast.success("Pelada encerrada.");

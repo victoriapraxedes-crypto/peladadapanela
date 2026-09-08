@@ -31,7 +31,7 @@ const POSICAO_ABREV: Record<Posicao, string> = {
 const NOMES_TIMES = ["Time A", "Time B", "Time C", "Time D"];
 
 const INPUT =
-  "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none focus:border-primary";
+  "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 const SECTION_LABEL =
   "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 const BTN_PRIMARY =
@@ -177,7 +177,7 @@ export function AdminTimesScreen() {
       }
       const { error } = await supabase.from("teams").insert(novas);
       if (error) {
-        toast.error(error.message);
+        toast.error("Não foi possível salvar os times. " + error.message);
         setCriandoTimes(false);
         return;
       }
@@ -187,7 +187,7 @@ export function AdminTimesScreen() {
       const excedentes = atuais.slice(quantidade).map((t) => t.id);
       const { error } = await supabase.from("teams").delete().in("id", excedentes);
       if (error) {
-        toast.error(error.message);
+        toast.error("Não foi possível remover os times extras. " + error.message);
         setCriandoTimes(false);
         return;
       }
@@ -232,7 +232,7 @@ export function AdminTimesScreen() {
     if (linhas.length > 0) {
       const { error } = await supabase.from("team_players").insert(linhas);
       if (error) {
-        toast.error(error.message);
+        toast.error("Não foi possível salvar a composição. " + error.message);
         setSalvando(false);
         return;
       }

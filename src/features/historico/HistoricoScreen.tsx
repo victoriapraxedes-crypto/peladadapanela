@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDataPorExtenso } from "@/lib/mock";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 
 interface ItemHistorico {
   id: string;
@@ -18,20 +21,28 @@ interface ItemHistorico {
 export function HistoricoScreen() {
   const [itens, setItens] = useState<ItemHistorico[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     async function load() {
       setLoading(true);
+      setErro(false);
 
       // 1) peladas finalizadas
-      const { data: peladas } = await supabase
+      const { data: peladas, error: peladasErr } = await supabase
         .from("peladas")
         .select("id, data, local")
         .eq("status", "finalizada")
         .order("data", { ascending: false });
 
       if (!ativo) return;
+      if (peladasErr) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       const lista = peladas ?? [];
       if (lista.length === 0) {
         setItens([]);
@@ -41,10 +52,17 @@ export function HistoricoScreen() {
       const peladaIds = lista.map((p) => p.id);
 
       // 2) partidas dessas peladas
-      const { data: matches } = await supabase
+      const { data: matches, error: matchesErr } = await supabase
         .from("matches")
         .select("id, pelada_id")
         .in("pelada_id", peladaIds);
+      if (matchesErr) {
+        if (ativo) {
+          setErro(true);
+          setLoading(false);
+        }
+        return;
+      }
       const partidas = matches ?? [];
       const matchIds = partidas.map((m) => m.id);
 
@@ -108,7 +126,7 @@ export function HistoricoScreen() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [tentativa]);
 
   return (
     <>
@@ -120,7 +138,11 @@ export function HistoricoScreen() {
         </h1>
       </header>
 
-      {loading ? (
+      {erro ? (
+        <div className="mt-5">
+          <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+        </div>
+      ) : loading ? (
         <div className="mt-5 grid gap-3">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-[136px] rounded-2xl" />
@@ -140,7 +162,10 @@ export function HistoricoScreen() {
               key={item.id}
               to="/historico/$peladaId"
               params={{ peladaId: item.id }}
-              className="block rounded-2xl border border-border bg-surface p-5"
+              className={cn(
+                "block rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary/40",
+                FOCUS_RING,
+              )}
             >
               <p className="font-display text-base font-semibold text-foreground">
                 {formatDataPorExtenso(item.data)}

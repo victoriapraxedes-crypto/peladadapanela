@@ -5,10 +5,13 @@ import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDataPorExtenso } from "@/lib/mock";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 
 interface PlayerInfo {
   id: string;
@@ -50,25 +53,32 @@ function Foto({ p, size }: { p: PlayerInfo | undefined; size: number }) {
 
 function useDadosHome() {
   const [dados, setDados] = useState<DadosHome | null>(null);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     (async () => {
-      const { data: season } = await supabase
+      setErro(false);
+      const { data: season, error: seasonErr } = await supabase
         .from("seasons")
         .select("id")
         .eq("ativa", true)
         .limit(1)
         .maybeSingle();
 
-      const [{ data: statRows }, { data: playerRows }, { data: winnerRows }, { data: peladaRows }] =
-        await Promise.all([
+      const [
+        { data: statRows, error: statErr },
+        { data: playerRows, error: playerErr },
+        { data: winnerRows, error: winnerErr },
+        { data: peladaRows, error: peladaErr },
+      ] = await Promise.all([
         season
           ? supabase
               .from("player_stats")
               .select("player_id, jogos, vitorias, gols, assistencias, participacoes_em_gols")
               .eq("season_id", season.id)
-          : Promise.resolve({ data: [] as never[] }),
+          : Promise.resolve({ data: [] as never[], error: null }),
         supabase.from("players").select("id, apelido, foto_url"),
         supabase.from("mvp_winners").select("player_id, pelada_id"),
         supabase
@@ -79,6 +89,12 @@ function useDadosHome() {
       ]);
 
       if (!ativo) return;
+
+      if (seasonErr || statErr || playerErr || winnerErr || peladaErr) {
+        setErro(true);
+        setDados(null);
+        return;
+      }
 
       const players = new Map<string, PlayerInfo>();
       for (const p of playerRows ?? []) {
@@ -116,9 +132,9 @@ function useDadosHome() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [tentativa]);
 
-  return dados;
+  return { dados, erro, recarregar: () => setTentativa((t) => t + 1) };
 }
 
 interface PeladaAtual {
@@ -143,6 +159,8 @@ function NextPeladaCard() {
   const [confirmados, setConfirmados] = useState<Confirmado[]>([]);
   const [loading, setLoading] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   const hojeISO = new Date().toISOString().slice(0, 10);
 
@@ -164,7 +182,8 @@ function NextPeladaCard() {
     let ativo = true;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      setErro(false);
+      const { data, error } = await supabase
         .from("peladas")
         .select("id, data, horario, local, seasons(nome)")
         .gte("data", hojeISO)
@@ -174,6 +193,13 @@ function NextPeladaCard() {
         .maybeSingle();
 
       if (!ativo) return;
+      if (error) {
+        setErro(true);
+        setPelada(null);
+        setConfirmados([]);
+        setLoading(false);
+        return;
+      }
       if (!data) {
         setPelada(null);
         setConfirmados([]);
@@ -187,7 +213,7 @@ function NextPeladaCard() {
     return () => {
       ativo = false;
     };
-  }, [hojeISO, fetchConfirmados]);
+  }, [hojeISO, fetchConfirmados, tentativa]);
 
   useEffect(() => {
     if (!pelada) return;
@@ -227,6 +253,10 @@ function NextPeladaCard() {
     );
   }
 
+  if (erro) {
+    return <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />;
+  }
+
   if (!pelada) {
     return (
       <CardFrame>
@@ -262,7 +292,7 @@ function NextPeladaCard() {
         .eq("player_id", player.id);
       if (error) {
         setConfirmados(anterior);
-        toast.error(error.message);
+        toast.error("Não foi possível desmarcar sua presença. " + error.message);
       }
     } else {
       setConfirmados((c) => [...c, { playerId: player.id, apelido: player.apelido }]);
@@ -271,7 +301,7 @@ function NextPeladaCard() {
         .insert({ pelada_id: pelada.id, player_id: player.id });
       if (error) {
         setConfirmados(anterior);
-        toast.error(error.message);
+        toast.error("Não foi possível confirmar sua presença. " + error.message);
       }
     }
 
@@ -324,14 +354,20 @@ function NextPeladaCard() {
         type="button"
         onClick={() => void handleToggle()}
         disabled={enviando}
-        className={
+        className={cn(
+          "mt-5 flex h-[52px] w-full items-center justify-center gap-2 rounded-xl font-display text-sm font-semibold uppercase tracking-[-0.01em] transition-colors disabled:opacity-60",
           confirmado
-            ? "mt-5 flex h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary bg-transparent font-display text-sm font-semibold uppercase tracking-[-0.01em] text-foreground disabled:opacity-60"
-            : "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim disabled:opacity-60"
-        }
+            ? "border border-primary bg-transparent text-foreground"
+            : "bg-primary text-primary-foreground hover:bg-primary-dim",
+          FOCUS_RING,
+        )}
       >
-        {confirmado && <Check size={18} className="text-success" />}
-        {confirmado ? "Presença confirmada" : "Confirmar presença"}
+        {!enviando && confirmado && <Check size={18} className="text-success" />}
+        {enviando
+          ? "Confirmando..."
+          : confirmado
+            ? "Presença confirmada"
+            : "Confirmar presença"}
       </button>
     </CardFrame>
   );
@@ -433,7 +469,13 @@ function RankingResumido({ dados }: { dados: DadosHome | null }) {
         <h3 className="truncate font-display text-base font-semibold text-foreground">
           Ranking geral
         </h3>
-        <Link to="/ranking" className="text-xs text-muted-foreground hover:text-foreground">
+        <Link
+          to="/ranking"
+          className={cn(
+            "rounded text-xs text-muted-foreground transition-colors hover:text-foreground",
+            FOCUS_RING,
+          )}
+        >
           Ver tudo
         </Link>
       </div>
@@ -474,8 +516,10 @@ function RankingResumido({ dados }: { dados: DadosHome | null }) {
 }
 
 function AcessoRapido() {
-  const itemClass =
-    "grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 text-sm font-medium text-foreground hover:border-primary/40";
+  const itemClass = cn(
+    "grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+    FOCUS_RING,
+  );
   return (
     <section className="grid gap-3">
       <Link to="/jogadores" className={itemClass}>
@@ -493,14 +537,20 @@ function AcessoRapido() {
 }
 
 export function HomeScreen() {
-  const dados = useDadosHome();
+  const { dados, erro, recarregar } = useDadosHome();
   return (
     <>
       <TopBar />
       <div className="grid gap-6">
         <NextPeladaCard />
-        <Destaques dados={dados} />
-        <RankingResumido dados={dados} />
+        {erro ? (
+          <ErroCarregamento onRetry={recarregar} />
+        ) : (
+          <>
+            <Destaques dados={dados} />
+            <RankingResumido dados={dados} />
+          </>
+        )}
         <AcessoRapido />
       </div>
     </>

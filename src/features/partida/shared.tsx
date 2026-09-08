@@ -1,4 +1,6 @@
 import { InitialsAvatar } from "@/components/layout/Avatar";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 
 export interface PartidaPlayer {
   id: string;
@@ -14,13 +16,16 @@ export interface TimeInfo {
 }
 
 export const BTN_PRIMARY_64 =
-  "flex h-16 w-full items-center justify-center gap-2 rounded-xl bg-primary font-display text-lg font-bold uppercase text-primary-foreground disabled:opacity-60";
+  "flex h-16 w-full items-center justify-center gap-2 rounded-xl bg-primary font-display text-lg font-bold uppercase text-primary-foreground transition-colors hover:bg-primary-dim disabled:opacity-60 " +
+  FOCUS_RING;
 
 export const BTN_SECONDARY =
-  "flex h-[52px] w-full items-center justify-center rounded-xl border border-border bg-surface-2 text-sm font-medium text-foreground disabled:opacity-60";
+  "flex h-[52px] w-full items-center justify-center rounded-xl border border-border bg-surface-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 disabled:opacity-60 " +
+  FOCUS_RING;
 
 export const BTN_BIG_SECONDARY =
-  "flex h-16 w-full items-center justify-center rounded-xl border border-border bg-surface-2 px-4 text-center font-display text-base font-semibold text-foreground disabled:opacity-60";
+  "flex h-16 w-full items-center justify-center rounded-xl border border-border bg-surface-2 px-4 text-center font-display text-base font-semibold text-foreground transition-colors hover:border-primary/40 disabled:opacity-60 " +
+  FOCUS_RING;
 
 export const SECTION_LABEL =
   "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
@@ -51,7 +56,10 @@ export function PlayerGrid({
           key={j.id}
           type="button"
           onClick={() => onSelect(j)}
-          className="flex min-h-[96px] flex-col items-center justify-center gap-1 rounded-xl border border-border bg-surface-2 p-3 text-center"
+          className={cn(
+            "flex min-h-[96px] flex-col items-center justify-center gap-1 rounded-xl border border-border bg-surface-2 p-3 text-center transition-colors hover:border-primary/40",
+            FOCUS_RING,
+          )}
         >
           {j.fotoUrl ? (
             <img

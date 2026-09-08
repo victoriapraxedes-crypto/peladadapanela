@@ -5,7 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FOCUS_RING } from "@/lib/ui";
 
 type StatsRow = Tables<"player_stats">;
 type PlayerRow = Pick<Tables<"players">, "id" | "apelido" | "foto_url" | "ativo">;
@@ -88,11 +90,14 @@ export function RankingScreen() {
   const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [stats, setStats] = useState<StatsRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     async function load() {
       setLoading(true);
+      setErro(false);
       // Máximo 3 requisições; o cruzamento é feito em memória.
       const playersRes = await supabase
         .from("players")
@@ -102,6 +107,13 @@ export function RankingScreen() {
       let statsRes;
       if (periodo === "temporada") {
         const seasonRes = await supabase.from("seasons").select("id").eq("ativa", true).maybeSingle();
+        if (seasonRes.error || playersRes.error) {
+          if (ativo) {
+            setErro(true);
+            setLoading(false);
+          }
+          return;
+        }
         if (!seasonRes.data) {
           if (ativo) {
             setPlayers(playersRes.data ?? []);
@@ -115,6 +127,11 @@ export function RankingScreen() {
         statsRes = await supabase.from("player_stats_alltime").select("*");
       }
       if (!ativo) return;
+      if (playersRes.error || statsRes.error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       setPlayers(playersRes.data ?? []);
       setStats((statsRes.data as StatsRow[] | null) ?? []);
       setLoading(false);
@@ -123,7 +140,7 @@ export function RankingScreen() {
     return () => {
       ativo = false;
     };
-  }, [periodo]);
+  }, [periodo, tentativa]);
 
   const lista = useMemo(() => {
     const byId = new Map(players.map((p) => [p.id, p]));
@@ -155,6 +172,7 @@ export function RankingScreen() {
               periodo === id
                 ? "border-primary bg-surface-2 text-foreground"
                 : "border-border bg-transparent text-muted-foreground hover:border-primary/40",
+              FOCUS_RING,
             )}
           >
             {label}
@@ -171,10 +189,11 @@ export function RankingScreen() {
               type="button"
               onClick={() => setMetrica(m.id)}
               className={cn(
-                "min-h-[40px] whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors",
+                "min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors",
                 metrica === m.id
                   ? "bg-primary text-primary-foreground"
-                  : "border border-border text-muted-foreground",
+                  : "border border-border text-muted-foreground hover:border-primary/40",
+                FOCUS_RING,
               )}
             >
               {m.label}
@@ -184,6 +203,9 @@ export function RankingScreen() {
       </div>
 
       {/* Lista */}
+      {erro ? (
+        <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+      ) : (
       <div className="rounded-2xl border border-border bg-surface">
         {loading ? (
           <div className="flex flex-col gap-4 p-5">
@@ -208,7 +230,11 @@ export function RankingScreen() {
                 <Link
                   to="/jogadores/$id"
                   params={{ id: s.player_id! }}
-                  className="grid min-h-[56px] grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-2 last:border-b-0">
+                  className={cn(
+                    "grid min-h-[56px] grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-2 transition-colors last:border-b-0 hover:bg-surface-2",
+                    FOCUS_RING,
+                  )}
+                >
                   <span
                     className={cn(
                       "num w-6 text-center text-base",
@@ -221,7 +247,7 @@ export function RankingScreen() {
                     <img
                       src={player.foto_url}
                       alt={player.apelido}
-                      className="h-10 w-10 rounded-full object-cover"
+                      className="h-10 w-10 shrink-0 rounded-full object-cover"
                     />
                   ) : (
                     <InitialsAvatar apelido={player.apelido} size={40} />
@@ -230,13 +256,14 @@ export function RankingScreen() {
                     <p className="truncate text-sm text-foreground">{player.apelido}</p>
                     <p className="truncate text-xs text-muted-foreground">{SUBLINHA[metrica](s)}</p>
                   </div>
-                  <span className="num text-2xl text-foreground">{VALOR[metrica](s)}</span>
+                  <span className="num shrink-0 text-2xl text-foreground">{VALOR[metrica](s)}</span>
                 </Link>
               </li>
             ))}
           </ul>
         )}
       </div>
+      )}
     </div>
   );
 }

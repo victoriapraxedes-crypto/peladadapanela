@@ -5,7 +5,10 @@ import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
 import { MvpCard } from "@/features/pelada/MvpCard";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -67,6 +70,8 @@ export function PeladaScreen() {
   const [times, setTimes] = useState<TimeComJogadores[]>([]);
   const [partidas, setPartidas] = useState<PartidaResumo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
   const [presencaBusyId, setPresencaBusyId] = useState<string | null>(null);
 
   const hojeISO = new Date().toISOString().slice(0, 10);
@@ -117,7 +122,7 @@ export function PeladaScreen() {
       .delete()
       .eq("pelada_id", peladaId)
       .eq("player_id", c.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error("Não foi possível remover a presença. " + error.message);
     else {
       await fetchConfirmados(peladaId);
       toast.success(`${c.apelido} removido.`);
@@ -131,7 +136,7 @@ export function PeladaScreen() {
     const { error } = await supabase
       .from("pelada_players")
       .insert({ pelada_id: peladaId, player_id: c.id });
-    if (error) toast.error(error.message);
+    if (error) toast.error("Não foi possível confirmar a presença. " + error.message);
     else {
       await fetchConfirmados(peladaId);
       toast.success(`${c.apelido} confirmado.`);
@@ -143,7 +148,8 @@ export function PeladaScreen() {
     let ativo = true;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      setErro(false);
+      const { data, error } = await supabase
         .from("peladas")
         .select("id, data, horario, local, status")
         .gte("data", hojeISO)
@@ -153,6 +159,11 @@ export function PeladaScreen() {
         .maybeSingle();
 
       if (!ativo) return;
+      if (error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       if (!data) {
         setPelada(null);
         setConfirmados([]);
@@ -204,7 +215,7 @@ export function PeladaScreen() {
     return () => {
       ativo = false;
     };
-  }, [hojeISO, fetchConfirmados]);
+  }, [hojeISO, fetchConfirmados, tentativa]);
 
   useEffect(() => {
     if (!pelada) return;
@@ -228,6 +239,17 @@ export function PeladaScreen() {
       void supabase.removeChannel(channel);
     };
   }, [pelada, fetchConfirmados]);
+
+  if (erro) {
+    return (
+      <>
+        <TopBar />
+        <div className="mt-2">
+          <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+        </div>
+      </>
+    );
+  }
 
   if (loading) {
     return (
@@ -255,7 +277,10 @@ export function PeladaScreen() {
           {isAdmin && (
             <Link
               to="/admin/pelada"
-              className="mt-5 flex h-[52px] w-full items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim"
+              className={cn(
+                "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground transition-colors hover:bg-primary-dim",
+                FOCUS_RING,
+              )}
             >
               Criar pelada
             </Link>
@@ -313,14 +338,19 @@ export function PeladaScreen() {
                   <InitialsAvatar apelido={c.apelido} size={36} />
                 )}
                 <span className="truncate text-sm text-foreground">{c.apelido}</span>
-                <span className="text-xs text-muted-foreground">{POSICAO_LABEL[c.posicao]}</span>
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                  {POSICAO_LABEL[c.posicao]}
+                </span>
                 {isAdmin && (
                   <button
                     type="button"
                     aria-label={"Remover " + c.apelido}
                     disabled={presencaBusyId === c.id}
                     onClick={() => void removerPresenca(pelada.id, c)}
-                    className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-destructive disabled:opacity-50"
+                    className={cn(
+                      "flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50",
+                      FOCUS_RING,
+                    )}
                   >
                     <X size={16} />
                   </button>
@@ -362,13 +392,18 @@ export function PeladaScreen() {
                     <InitialsAvatar apelido={c.apelido} size={36} />
                   )}
                   <span className="truncate text-sm text-foreground">{c.apelido}</span>
-                  <span className="text-xs text-muted-foreground">{POSICAO_LABEL[c.posicao]}</span>
+                  <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                    {POSICAO_LABEL[c.posicao]}
+                  </span>
                   <button
                     type="button"
                     aria-label={"Adicionar " + c.apelido}
                     disabled={presencaBusyId === c.id}
                     onClick={() => void adicionarPresenca(pelada.id, c)}
-                    className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-primary disabled:opacity-50"
+                    className={cn(
+                      "flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-primary disabled:opacity-50",
+                      FOCUS_RING,
+                    )}
                   >
                     <Plus size={16} />
                   </button>
@@ -412,7 +447,10 @@ export function PeladaScreen() {
                 <Link
                   to="/partida/$id"
                   params={{ id: p.id }}
-                  className="grid min-h-[44px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
+                  className={cn(
+                    "grid min-h-[44px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4 transition-colors hover:text-primary",
+                    FOCUS_RING,
+                  )}
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm text-foreground">
@@ -422,7 +460,7 @@ export function PeladaScreen() {
                       <StatusBadge status={p.status} />
                     </span>
                   </span>
-                  <span className="num text-xl text-foreground">
+                  <span className="num shrink-0 whitespace-nowrap text-xl text-foreground">
                     {p.placarA} – {p.placarB}
                   </span>
                 </Link>
@@ -433,18 +471,24 @@ export function PeladaScreen() {
       </section>
 
       {isAdmin && (
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-3">
           <Link
             to="/admin/times"
-            className="flex h-[52px] items-center justify-center rounded-xl border border-border bg-surface-2 text-sm font-medium text-foreground"
+            className={cn(
+              "flex h-[52px] min-w-0 items-center justify-center rounded-xl border border-border bg-surface-2 px-2 text-center text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+              FOCUS_RING,
+            )}
           >
-            Montar times
+            <span className="truncate">Montar times</span>
           </Link>
           <Link
             to="/admin"
-            className="flex h-[52px] items-center justify-center rounded-xl border border-border bg-surface-2 text-sm font-medium text-foreground"
+            className={cn(
+              "flex h-[52px] min-w-0 items-center justify-center rounded-xl border border-border bg-surface-2 px-2 text-center text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+              FOCUS_RING,
+            )}
           >
-            Painel
+            <span className="truncate">Painel</span>
           </Link>
         </div>
       )}
