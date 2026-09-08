@@ -60,6 +60,13 @@ export type Database = {
             foreignKeyName: "match_events_assist_player_id_fkey"
             columns: ["assist_player_id"]
             isOneToOne: false
+            referencedRelation: "player_stats_alltime"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "match_events_assist_player_id_fkey"
+            columns: ["assist_player_id"]
+            isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
@@ -89,6 +96,13 @@ export type Database = {
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "match_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats_alltime"
             referencedColumns: ["player_id"]
           },
           {
@@ -209,6 +223,13 @@ export type Database = {
             foreignKeyName: "mvp_votes_voted_player_id_fkey"
             columns: ["voted_player_id"]
             isOneToOne: false
+            referencedRelation: "player_stats_alltime"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "mvp_votes_voted_player_id_fkey"
+            columns: ["voted_player_id"]
+            isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
@@ -217,6 +238,13 @@ export type Database = {
             columns: ["voter_player_id"]
             isOneToOne: false
             referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "mvp_votes_voter_player_id_fkey"
+            columns: ["voter_player_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats_alltime"
             referencedColumns: ["player_id"]
           },
           {
@@ -257,6 +285,13 @@ export type Database = {
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "pelada_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats_alltime"
             referencedColumns: ["player_id"]
           },
           {
@@ -439,6 +474,13 @@ export type Database = {
             foreignKeyName: "team_players_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
+            referencedRelation: "player_stats_alltime"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "team_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
@@ -528,6 +570,13 @@ export type Database = {
             foreignKeyName: "team_players_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
+            referencedRelation: "player_stats_alltime"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "team_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
@@ -565,6 +614,13 @@ export type Database = {
             foreignKeyName: "mvp_votes_voted_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
+            referencedRelation: "player_stats_alltime"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "mvp_votes_voted_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
@@ -585,6 +641,24 @@ export type Database = {
           participacoes_em_gols: number | null
           player_id: string | null
           season_id: string | null
+          vitorias: number | null
+        }
+        Relationships: []
+      }
+      player_stats_alltime: {
+        Row: {
+          aproveitamento: number | null
+          assistencias: number | null
+          derrotas: number | null
+          empates: number | null
+          gols: number | null
+          gols_contra: number | null
+          jogos: number | null
+          media_assistencias_por_jogo: number | null
+          media_gols_por_jogo: number | null
+          mvps: number | null
+          participacoes_em_gols: number | null
+          player_id: string | null
           vitorias: number | null
         }
         Relationships: []
