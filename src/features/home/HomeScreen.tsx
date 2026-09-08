@@ -351,14 +351,20 @@ function NextPeladaCard() {
         type="button"
         onClick={() => void handleToggle()}
         disabled={enviando}
-        className={
+        className={cn(
+          "mt-5 flex h-[52px] w-full items-center justify-center gap-2 rounded-xl font-display text-sm font-semibold uppercase tracking-[-0.01em] transition-colors disabled:opacity-60",
           confirmado
-            ? "mt-5 flex h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary bg-transparent font-display text-sm font-semibold uppercase tracking-[-0.01em] text-foreground disabled:opacity-60"
-            : "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim disabled:opacity-60"
-        }
+            ? "border border-primary bg-transparent text-foreground"
+            : "bg-primary text-primary-foreground hover:bg-primary-dim",
+          FOCUS_RING,
+        )}
       >
-        {confirmado && <Check size={18} className="text-success" />}
-        {confirmado ? "Presença confirmada" : "Confirmar presença"}
+        {!enviando && confirmado && <Check size={18} className="text-success" />}
+        {enviando
+          ? "Confirmando..."
+          : confirmado
+            ? "Presença confirmada"
+            : "Confirmar presença"}
       </button>
     </CardFrame>
   );
