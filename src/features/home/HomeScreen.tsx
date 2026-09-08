@@ -469,7 +469,13 @@ function RankingResumido({ dados }: { dados: DadosHome | null }) {
         <h3 className="truncate font-display text-base font-semibold text-foreground">
           Ranking geral
         </h3>
-        <Link to="/ranking" className="text-xs text-muted-foreground hover:text-foreground">
+        <Link
+          to="/ranking"
+          className={cn(
+            "rounded text-xs text-muted-foreground transition-colors hover:text-foreground",
+            FOCUS_RING,
+          )}
+        >
           Ver tudo
         </Link>
       </div>
@@ -510,8 +516,10 @@ function RankingResumido({ dados }: { dados: DadosHome | null }) {
 }
 
 function AcessoRapido() {
-  const itemClass =
-    "grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 text-sm font-medium text-foreground hover:border-primary/40";
+  const itemClass = cn(
+    "grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+    FOCUS_RING,
+  );
   return (
     <section className="grid gap-3">
       <Link to="/jogadores" className={itemClass}>
@@ -529,14 +537,20 @@ function AcessoRapido() {
 }
 
 export function HomeScreen() {
-  const dados = useDadosHome();
+  const { dados, erro, recarregar } = useDadosHome();
   return (
     <>
       <TopBar />
       <div className="grid gap-6">
         <NextPeladaCard />
-        <Destaques dados={dados} />
-        <RankingResumido dados={dados} />
+        {erro ? (
+          <ErroCarregamento onRetry={recarregar} />
+        ) : (
+          <>
+            <Destaques dados={dados} />
+            <RankingResumido dados={dados} />
+          </>
+        )}
         <AcessoRapido />
       </div>
     </>
