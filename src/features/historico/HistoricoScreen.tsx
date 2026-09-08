@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDataPorExtenso } from "@/lib/mock";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 
 interface ItemHistorico {
   id: string;
@@ -18,20 +21,28 @@ interface ItemHistorico {
 export function HistoricoScreen() {
   const [itens, setItens] = useState<ItemHistorico[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     async function load() {
       setLoading(true);
+      setErro(false);
 
       // 1) peladas finalizadas
-      const { data: peladas } = await supabase
+      const { data: peladas, error: peladasErr } = await supabase
         .from("peladas")
         .select("id, data, local")
         .eq("status", "finalizada")
         .order("data", { ascending: false });
 
       if (!ativo) return;
+      if (peladasErr) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       const lista = peladas ?? [];
       if (lista.length === 0) {
         setItens([]);
