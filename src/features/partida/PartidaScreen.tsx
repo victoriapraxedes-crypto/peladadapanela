@@ -432,7 +432,7 @@ export function PartidaScreen({ id }: { id: string }) {
                     void desfazer();
                   }}
                 >
-                  Desfazer
+                  {ocupado ? "Desfazendo..." : "Desfazer"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
