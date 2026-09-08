@@ -289,7 +289,7 @@ function NextPeladaCard() {
         .eq("player_id", player.id);
       if (error) {
         setConfirmados(anterior);
-        toast.error(error.message);
+        toast.error("Não foi possível desmarcar sua presença. " + error.message);
       }
     } else {
       setConfirmados((c) => [...c, { playerId: player.id, apelido: player.apelido }]);
@@ -298,7 +298,7 @@ function NextPeladaCard() {
         .insert({ pelada_id: pelada.id, player_id: player.id });
       if (error) {
         setConfirmados(anterior);
-        toast.error(error.message);
+        toast.error("Não foi possível confirmar sua presença. " + error.message);
       }
     }
 
