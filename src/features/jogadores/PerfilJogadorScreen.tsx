@@ -9,7 +9,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FOCUS_RING } from "@/lib/ui";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 import { PE_LABEL, POSICAO_LABEL } from "@/features/jogadores/labels";
 
 type PlayerRow = Tables<"players">;

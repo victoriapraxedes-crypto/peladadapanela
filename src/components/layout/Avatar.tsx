@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { initials } from "@/lib/mock/players";
+import { initials } from "@/lib/format/players";
 
 interface InitialsAvatarProps {
   apelido: string;

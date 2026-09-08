@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 
 // Decisão de produto: a /pelada mostra sempre a PRÓXIMA pelada em aberto, então
 // uma pelada finalizada nunca apareceria aqui e a votação de MVP ficaria

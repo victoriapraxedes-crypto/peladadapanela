@@ -8,7 +8,7 @@ import { InitialsAvatar } from "@/components/layout/Avatar";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
 import { POSICAO_LABEL } from "@/features/jogadores/labels";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 import type { Database, Tables } from "@/integrations/supabase/types";
 
 type Posicao = Database["public"]["Enums"]["posicao"];

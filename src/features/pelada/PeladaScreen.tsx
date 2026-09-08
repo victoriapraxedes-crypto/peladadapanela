@@ -14,7 +14,7 @@ import { MvpCard } from "@/features/pelada/MvpCard";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { formatDataPorExtenso } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/format";
 
 type PeladaStatus = Database["public"]["Enums"]["pelada_status"];
 type MatchStatus = Database["public"]["Enums"]["match_status"];
