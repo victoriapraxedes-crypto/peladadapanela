@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -204,8 +205,10 @@ export function RankingScreen() {
           <ul>
             {lista.map(({ stats: s, player }, i) => (
               <li key={s.player_id}>
-                {/* TODO: link para /jogadores/$id (rota criada na próxima etapa) */}
-                <div className="grid min-h-[56px] grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-2 last:border-b-0">
+                <Link
+                  to="/jogadores/$id"
+                  params={{ id: s.player_id! }}
+                  className="grid min-h-[56px] grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-2 last:border-b-0">
                   <span
                     className={cn(
                       "num w-6 text-center text-base",
@@ -228,7 +231,7 @@ export function RankingScreen() {
                     <p className="truncate text-xs text-muted-foreground">{SUBLINHA[metrica](s)}</p>
                   </div>
                   <span className="num text-2xl text-foreground">{VALOR[metrica](s)}</span>
-                </div>
+                </Link>
               </li>
             ))}
           </ul>
