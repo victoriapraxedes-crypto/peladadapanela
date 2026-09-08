@@ -172,6 +172,7 @@ export function RankingScreen() {
               periodo === id
                 ? "border-primary bg-surface-2 text-foreground"
                 : "border-border bg-transparent text-muted-foreground hover:border-primary/40",
+              FOCUS_RING,
             )}
           >
             {label}
@@ -188,10 +189,11 @@ export function RankingScreen() {
               type="button"
               onClick={() => setMetrica(m.id)}
               className={cn(
-                "min-h-[40px] whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors",
+                "min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors",
                 metrica === m.id
                   ? "bg-primary text-primary-foreground"
-                  : "border border-border text-muted-foreground",
+                  : "border border-border text-muted-foreground hover:border-primary/40",
+                FOCUS_RING,
               )}
             >
               {m.label}
