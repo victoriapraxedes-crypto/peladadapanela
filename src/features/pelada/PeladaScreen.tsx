@@ -155,6 +155,7 @@ export function PeladaScreen() {
       if (!data) {
         setPelada(null);
         setConfirmados([]);
+        setNaoConfirmados([]);
         setTimes([]);
         setPartidas([]);
         setLoading(false);
