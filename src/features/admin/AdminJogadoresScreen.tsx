@@ -1,0 +1,332 @@
+import { useCallback, useEffect, useState } from "react";
+import { UserPlus } from "lucide-react";
+import { toast } from "sonner";
+
+import { TopBar } from "@/components/layout/TopBar";
+import { InitialsAvatar } from "@/components/layout/Avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type Posicao = Database["public"]["Enums"]["posicao"];
+type Pe = Database["public"]["Enums"]["pe_dominante"];
+
+const POSICOES: { value: Posicao; label: string }[] = [
+  { value: "goleiro", label: "Goleiro" },
+  { value: "defensor", label: "Defensor" },
+  { value: "meio-campo", label: "Meio-campo" },
+  { value: "atacante", label: "Atacante" },
+];
+
+const POSICAO_ABREV: Record<Posicao, string> = {
+  goleiro: "GOL",
+  defensor: "DEF",
+  "meio-campo": "MEI",
+  atacante: "ATA",
+};
+
+const PES: { value: Pe; label: string }[] = [
+  { value: "direito", label: "Direito" },
+  { value: "esquerdo", label: "Esquerdo" },
+  { value: "ambidestro", label: "Ambidestro" },
+];
+
+const INPUT =
+  "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none focus:border-primary";
+const SECTION_LABEL =
+  "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+
+function optionClass(selected: boolean) {
+  return [
+    "flex min-h-[52px] items-center justify-center rounded-xl border px-3 text-sm font-medium transition-colors",
+    selected
+      ? "border-primary bg-surface-2 text-foreground"
+      : "border-border bg-transparent text-muted-foreground hover:border-primary/40",
+  ].join(" ");
+}
+
+interface PlayerRow {
+  id: string;
+  nome: string;
+  apelido: string;
+  foto_url: string | null;
+  posicao_principal: Posicao;
+  ativo: boolean;
+}
+
+export function AdminJogadoresScreen() {
+  const [players, setPlayers] = useState<PlayerRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [aberto, setAberto] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const [nome, setNome] = useState("");
+  const [apelido, setApelido] = useState("");
+  const [posicao, setPosicao] = useState<Posicao | null>(null);
+  const [pe, setPe] = useState<Pe>("direito");
+  const [numero, setNumero] = useState("");
+
+  const carregar = useCallback(async () => {
+    const { data } = await supabase
+      .from("players")
+      .select("id, nome, apelido, foto_url, posicao_principal, ativo")
+      .order("apelido", { ascending: true });
+    setPlayers(data ?? []);
+  }, []);
+
+  useEffect(() => {
+    let ativo = true;
+    (async () => {
+      await carregar();
+      if (ativo) setLoading(false);
+    })();
+    return () => {
+      ativo = false;
+    };
+  }, [carregar]);
+
+  const limpar = () => {
+    setNome("");
+    setApelido("");
+    setPosicao(null);
+    setPe("direito");
+    setNumero("");
+  };
+
+  const valido = nome.trim() !== "" && apelido.trim() !== "" && posicao !== null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!valido || saving) return;
+    setSaving(true);
+
+    const { error } = await supabase.from("players").insert({
+      nome: nome.trim(),
+      apelido: apelido.trim(),
+      posicao_principal: posicao,
+      pe_dominante: pe,
+      numero_preferido: numero.trim() === "" ? null : Number(numero),
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setSaving(false);
+      return;
+    }
+
+    await carregar();
+    limpar();
+    setAberto(false);
+    setSaving(false);
+    toast.success("Jogador cadastrado.");
+  };
+
+  const alternarAtivo = async (p: PlayerRow) => {
+    if (togglingId) return;
+    setTogglingId(p.id);
+    const { error } = await supabase.from("players").update({ ativo: !p.ativo }).eq("id", p.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      await carregar();
+      toast.success(p.ativo ? `${p.apelido} ficou inativo.` : `${p.apelido} está ativo.`);
+    }
+    setTogglingId(null);
+  };
+
+  const ativos = players.filter((p) => p.ativo).length;
+
+  return (
+    <>
+      <TopBar />
+
+      <header className="pt-2">
+        <h1 className="font-display text-2xl font-bold leading-tight tracking-[-0.02em] text-foreground">
+          Jogadores
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Você pode cadastrar quem joga mesmo sem a pessoa ter conta no app.
+        </p>
+        {!loading && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            <span className="num text-foreground">{players.length}</span> jogadores ·{" "}
+            <span className="num text-foreground">{ativos}</span> ativos
+          </p>
+        )}
+      </header>
+
+      <div className="mt-5">
+        {!aberto ? (
+          <button
+            type="button"
+            onClick={() => setAberto(true)}
+            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 text-sm font-medium text-foreground"
+          >
+            <UserPlus size={18} />
+            Cadastrar jogador
+          </button>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="grid gap-5 rounded-2xl border border-border bg-surface p-5"
+          >
+            <p className={SECTION_LABEL}>Novo jogador</p>
+
+            <div className="grid gap-2">
+              <label htmlFor="j-nome" className="text-sm font-medium text-foreground">
+                Nome
+              </label>
+              <input
+                id="j-nome"
+                required
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                className={INPUT}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="j-apelido" className="text-sm font-medium text-foreground">
+                Apelido
+              </label>
+              <input
+                id="j-apelido"
+                required
+                maxLength={16}
+                value={apelido}
+                onChange={(e) => setApelido(e.target.value)}
+                className={INPUT}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <span className="text-sm font-medium text-foreground">Posição principal</span>
+              <div className="grid grid-cols-2 gap-3">
+                {POSICOES.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    aria-pressed={posicao === p.value}
+                    onClick={() => setPosicao(p.value)}
+                    className={optionClass(posicao === p.value)}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <span className="text-sm font-medium text-foreground">Pé dominante</span>
+              <div className="grid grid-cols-3 gap-3">
+                {PES.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    aria-pressed={pe === p.value}
+                    onClick={() => setPe(p.value)}
+                    className={optionClass(pe === p.value)}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="j-numero" className="text-sm font-medium text-foreground">
+                Número preferido <span className="text-muted-foreground">(opcional)</span>
+              </label>
+              <input
+                id="j-numero"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={99}
+                value={numero}
+                onChange={(e) => setNumero(e.target.value)}
+                className={INPUT}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  limpar();
+                  setAberto(false);
+                }}
+                className="flex h-[52px] items-center justify-center rounded-xl border border-border bg-surface-2 text-sm font-medium text-foreground"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={!valido || saving}
+                className="flex h-[52px] items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim disabled:opacity-50"
+              >
+                {saving ? "Salvando..." : "Salvar jogador"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
+        <p className={SECTION_LABEL}>Elenco</p>
+
+        {loading ? (
+          <div className="mt-3 grid gap-3">
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </div>
+        ) : players.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">Nenhum jogador cadastrado ainda.</p>
+        ) : (
+          <ul className="mt-3">
+            {players.map((p) => (
+              <li
+                key={p.id}
+                className={`grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0 ${
+                  p.ativo ? "" : "opacity-50"
+                }`}
+              >
+                {p.foto_url ? (
+                  <img
+                    src={p.foto_url}
+                    alt={p.apelido}
+                    width={36}
+                    height={36}
+                    referrerPolicy="no-referrer"
+                    className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <InitialsAvatar apelido={p.apelido} size={36} />
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate text-sm text-foreground">{p.apelido}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{p.nome}</span>
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {POSICAO_ABREV[p.posicao_principal]}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void alternarAtivo(p)}
+                  disabled={togglingId === p.id}
+                  className={`flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-xs font-medium disabled:opacity-50 ${
+                    p.ativo ? "text-success" : "text-muted-foreground"
+                  }`}
+                >
+                  {p.ativo ? "Ativo" : "Inativo"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
