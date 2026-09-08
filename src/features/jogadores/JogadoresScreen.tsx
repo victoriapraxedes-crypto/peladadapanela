@@ -153,13 +153,16 @@ export function JogadoresScreen() {
                 <Link
                   to="/jogadores/$id"
                   params={{ id: player.id }}
-                  className="flex min-h-[56px] items-center gap-3 border-b border-border px-5 py-2 last:border-b-0"
+                  className={cn(
+                    "flex min-h-[56px] items-center gap-3 border-b border-border px-4 py-2 transition-colors last:border-b-0 hover:bg-surface-2 sm:px-5",
+                    FOCUS_RING,
+                  )}
                 >
                   {player.foto_url ? (
                     <img
                       src={player.foto_url}
                       alt={player.apelido}
-                      className="h-11 w-11 rounded-full object-cover"
+                      className="h-11 w-11 shrink-0 rounded-full object-cover"
                     />
                   ) : (
                     <InitialsAvatar apelido={player.apelido} size={44} />
@@ -170,7 +173,7 @@ export function JogadoresScreen() {
                       {POSICAO_LABEL[player.posicao_principal]}
                     </p>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex shrink-0 gap-2 sm:gap-4">
                     {(
                       [
                         ["Jogos", s?.jogos ?? 0],
@@ -178,7 +181,7 @@ export function JogadoresScreen() {
                         ["Assist", s?.assistencias ?? 0],
                       ] as const
                     ).map(([label, valor]) => (
-                      <div key={label} className="flex w-10 flex-col items-center">
+                      <div key={label} className="flex w-9 flex-col items-center sm:w-10">
                         <span className="num text-base text-foreground">{valor}</span>
                         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                           {label}
