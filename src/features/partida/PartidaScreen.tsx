@@ -176,6 +176,21 @@ export function PartidaScreen({ id }: { id: string }) {
     };
   }, [id]);
 
+  if (erro) {
+    return (
+      <>
+        <TopBar />
+        <div className="mt-4">
+          <ErroCarregamento
+            onRetry={() => {
+              void carregarRef.current?.();
+            }}
+          />
+        </div>
+      </>
+    );
+  }
+
   if (loading) {
     return (
       <>
