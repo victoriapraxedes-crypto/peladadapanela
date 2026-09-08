@@ -5,10 +5,13 @@ import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDataPorExtenso } from "@/lib/mock";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 
 interface PlayerInfo {
   id: string;
