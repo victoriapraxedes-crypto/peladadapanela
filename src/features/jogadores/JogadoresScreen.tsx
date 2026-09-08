@@ -6,9 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { POSICAO_LABEL } from "@/features/jogadores/labels";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 
 type PlayerRow = Pick<
   Tables<"players">,
@@ -30,10 +33,14 @@ export function JogadoresScreen() {
   const [stats, setStats] = useState<StatsRow[]>([]);
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     async function load() {
+      setLoading(true);
+      setErro(false);
       // No máximo 3 requisições; o cruzamento é feito em memória.
       const playersRes = await supabase
         .from("players")
@@ -44,6 +51,11 @@ export function JogadoresScreen() {
         ? await supabase.from("player_stats").select("*").eq("season_id", seasonRes.data.id)
         : null;
       if (!ativo) return;
+      if (playersRes.error || seasonRes.error || statsRes?.error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       setPlayers(playersRes.data ?? []);
       setStats(statsRes?.data ?? []);
       setLoading(false);
@@ -52,7 +64,7 @@ export function JogadoresScreen() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [tentativa]);
 
   const lista = useMemo(() => {
     const byId = new Map(stats.filter((s) => s.player_id).map((s) => [s.player_id!, s]));
