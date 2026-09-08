@@ -5,7 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FOCUS_RING } from "@/lib/ui";
 
 type StatsRow = Tables<"player_stats">;
 type PlayerRow = Pick<Tables<"players">, "id" | "apelido" | "foto_url" | "ativo">;
@@ -88,11 +90,14 @@ export function RankingScreen() {
   const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [stats, setStats] = useState<StatsRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     async function load() {
       setLoading(true);
+      setErro(false);
       // Máximo 3 requisições; o cruzamento é feito em memória.
       const playersRes = await supabase
         .from("players")
@@ -102,6 +107,13 @@ export function RankingScreen() {
       let statsRes;
       if (periodo === "temporada") {
         const seasonRes = await supabase.from("seasons").select("id").eq("ativa", true).maybeSingle();
+        if (seasonRes.error || playersRes.error) {
+          if (ativo) {
+            setErro(true);
+            setLoading(false);
+          }
+          return;
+        }
         if (!seasonRes.data) {
           if (ativo) {
             setPlayers(playersRes.data ?? []);
@@ -115,6 +127,11 @@ export function RankingScreen() {
         statsRes = await supabase.from("player_stats_alltime").select("*");
       }
       if (!ativo) return;
+      if (playersRes.error || statsRes.error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       setPlayers(playersRes.data ?? []);
       setStats((statsRes.data as StatsRow[] | null) ?? []);
       setLoading(false);
@@ -123,7 +140,7 @@ export function RankingScreen() {
     return () => {
       ativo = false;
     };
-  }, [periodo]);
+  }, [periodo, tentativa]);
 
   const lista = useMemo(() => {
     const byId = new Map(players.map((p) => [p.id, p]));
