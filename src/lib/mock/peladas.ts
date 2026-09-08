@@ -1,4 +1,4 @@
-import type { AuthUser, Pelada, Season } from "@/types/domain";
+import type { Pelada, Season } from "@/types/domain";
 
 export const currentSeason: Season = {
   id: "s2026",
@@ -95,12 +95,6 @@ export const recentMvp = {
   playerId: "p6",
   peladaId: "pl-2",
   peladaLabel: `Pelada de ${formatDDMM(dataRecente)}`,
-};
-
-export const currentUser: AuthUser = {
-  id: "u1",
-  playerId: "p1",
-  role: "admin",
 };
 
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
