@@ -64,8 +64,12 @@ function useDadosHome() {
         .limit(1)
         .maybeSingle();
 
-      const [{ data: statRows }, { data: playerRows }, { data: winnerRows }, { data: peladaRows }] =
-        await Promise.all([
+      const [
+        { data: statRows, error: statErr },
+        { data: playerRows, error: playerErr },
+        { data: winnerRows, error: winnerErr },
+        { data: peladaRows, error: peladaErr },
+      ] = await Promise.all([
         season
           ? supabase
               .from("player_stats")
