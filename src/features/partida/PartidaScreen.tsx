@@ -4,7 +4,10 @@ import { CircleDot } from "lucide-react";
 import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +55,7 @@ export function PartidaScreen({ id }: { id: string }) {
   const [partida, setPartida] = useState<Partida | null>(null);
   const [eventos, setEventos] = useState<EventoPartida[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
 
   const [golAberto, setGolAberto] = useState(false);
   const [golContraAberto, setGolContraAberto] = useState(false);
@@ -61,13 +65,19 @@ export function PartidaScreen({ id }: { id: string }) {
   const [ocupado, setOcupado] = useState(false);
 
   const carregar = useCallback(async () => {
-    const { data } = await supabase
+    setErro(false);
+    const { data, error } = await supabase
       .from("matches")
       .select(
         "id, placar_a, placar_b, status, inicio_em, team_a_id, team_b_id, team_a:team_a_id(nome), team_b:team_b_id(nome)",
       )
       .eq("id", id)
       .maybeSingle();
+
+    if (error) {
+      setErro(true);
+      return;
+    }
 
     if (!data) {
       setPartida(null);
