@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as JogadoresRouteImport } from './routes/jogadores'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PeladaRouteImport } from './routes/pelada'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as RankingRouteImport } from './routes/ranking'
@@ -37,6 +38,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeladaRoute = PeladaRouteImport.update({
   id: '/pelada',
   path: '/pelada',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/historico': typeof HistoricoRoute
   '/jogadores': typeof JogadoresRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/historico': typeof HistoricoRoute
   '/jogadores': typeof JogadoresRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/historico': typeof HistoricoRoute
   '/jogadores': typeof JogadoresRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/jogadores'
     | '/login'
+    | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/jogadores'
     | '/login'
+    | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/jogadores'
     | '/login'
+    | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   HistoricoRoute: typeof HistoricoRoute
   JogadoresRoute: typeof JogadoresRoute
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   PeladaRoute: typeof PeladaRoute
   PerfilRoute: typeof PerfilRoute
   RankingRoute: typeof RankingRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pelada': {
       id: '/pelada'
       path: '/pelada'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoricoRoute: HistoricoRoute,
   JogadoresRoute: JogadoresRoute,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   PeladaRoute: PeladaRoute,
   PerfilRoute: PerfilRoute,
   RankingRoute: RankingRoute,

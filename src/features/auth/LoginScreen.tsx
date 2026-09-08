@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
+import { useAuth } from "@/features/auth/AuthProvider";
 
 function GoogleIcon({ size = 20 }: { size?: number }) {
   return (
@@ -26,10 +28,22 @@ function GoogleIcon({ size = 20 }: { size?: number }) {
 
 export function LoginScreen() {
   const navigate = useNavigate();
+  const { session, loading, signInWithGoogle } = useAuth();
+  const [entrando, setEntrando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const handleGoogle = () => {
-    // TODO: substituir por Supabase Auth (signInWithOAuth provider "google") na etapa de backend.
-    navigate({ to: "/" });
+  useEffect(() => {
+    if (!loading && session) navigate({ to: "/" });
+  }, [loading, session, navigate]);
+
+  const handleGoogle = async () => {
+    setEntrando(true);
+    setErro(null);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setErro(error);
+      setEntrando(false);
+    }
   };
 
   return (
@@ -47,11 +61,14 @@ export function LoginScreen() {
         <button
           type="button"
           onClick={handleGoogle}
-          className="mt-10 flex h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 font-display font-semibold text-primary-foreground hover:bg-primary-dim active:bg-primary-dim"
+          disabled={entrando}
+          className="mt-10 flex h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 font-display font-semibold text-primary-foreground hover:bg-primary-dim active:bg-primary-dim disabled:opacity-60"
         >
           <GoogleIcon />
-          Entrar com Google
+          {entrando ? "Entrando..." : "Entrar com Google"}
         </button>
+
+        {erro && <p className="mt-3 w-full text-xs text-destructive">{erro}</p>}
 
         <button
           type="button"

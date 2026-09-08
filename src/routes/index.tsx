@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
+import { RequireAuth } from "@/features/auth/RequireAuth";
 import { HomeScreen } from "@/features/home/HomeScreen";
 
 export const Route = createFileRoute("/")({
@@ -23,8 +24,10 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <AppShell>
-      <HomeScreen />
-    </AppShell>
+    <RequireAuth>
+      <AppShell>
+        <HomeScreen />
+      </AppShell>
+    </RequireAuth>
   );
 }
