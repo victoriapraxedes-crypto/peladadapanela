@@ -8,7 +8,111 @@ import { InitialsAvatar } from "@/components/layout/Avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDataPorExtenso, getPlayer, playerStats, recentMvp } from "@/lib/mock";
+import { formatDataPorExtenso } from "@/lib/mock";
+
+interface PlayerInfo {
+  id: string;
+  apelido: string;
+  fotoUrl: string | null;
+}
+
+interface StatRow {
+  playerId: string;
+  jogos: number;
+  vitorias: number;
+  gols: number;
+  assistencias: number;
+  participacoesEmGols: number;
+}
+
+interface DadosHome {
+  stats: StatRow[];
+  players: Map<string, PlayerInfo>;
+  mvp: { playerId: string; data: string } | null;
+}
+
+function Foto({ p, size }: { p: PlayerInfo | undefined; size: number }) {
+  if (p?.fotoUrl) {
+    return (
+      <img
+        src={p.fotoUrl}
+        alt={p.apelido}
+        width={size}
+        height={size}
+        referrerPolicy="no-referrer"
+        className="shrink-0 rounded-full object-cover"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return <InitialsAvatar apelido={p?.apelido ?? "??"} size={size} />;
+}
+
+function useDadosHome() {
+  const [dados, setDados] = useState<DadosHome | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    (async () => {
+      const { data: season } = await supabase
+        .from("seasons")
+        .select("id")
+        .eq("ativa", true)
+        .limit(1)
+        .maybeSingle();
+
+      const [{ data: statRows }, { data: playerRows }, { data: winnerRows }] = await Promise.all([
+        season
+          ? supabase
+              .from("player_stats")
+              .select("player_id, jogos, vitorias, gols, assistencias, participacoes_em_gols")
+              .eq("season_id", season.id)
+          : Promise.resolve({ data: [] as never[] }),
+        supabase.from("players").select("id, apelido, foto_url"),
+        supabase
+          .from("mvp_winners")
+          .select("player_id, pelada_id, peladas!inner(data, status)")
+          .eq("peladas.status", "finalizada"),
+      ]);
+
+      if (!ativo) return;
+
+      const players = new Map<string, PlayerInfo>();
+      for (const p of playerRows ?? []) {
+        players.set(p.id, { id: p.id, apelido: p.apelido, fotoUrl: p.foto_url });
+      }
+
+      const stats: StatRow[] = (statRows ?? [])
+        .filter((s) => s.player_id)
+        .map((s) => ({
+          playerId: s.player_id as string,
+          jogos: s.jogos ?? 0,
+          vitorias: s.vitorias ?? 0,
+          gols: s.gols ?? 0,
+          assistencias: s.assistencias ?? 0,
+          participacoesEmGols: s.participacoes_em_gols ?? 0,
+        }));
+
+      const winners = (winnerRows ?? [])
+        .filter((w) => w.player_id && w.peladas)
+        .sort((a, b) => (a.peladas!.data < b.peladas!.data ? 1 : -1));
+      const topWinner = winners[0];
+
+      setDados({
+        stats,
+        players,
+        mvp: topWinner
+          ? { playerId: topWinner.player_id as string, data: topWinner.peladas!.data }
+          : null,
+      });
+    })();
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  return dados;
+}
 
 interface PeladaAtual {
   id: string;
