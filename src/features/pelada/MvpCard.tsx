@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { InitialsAvatar } from "@/components/layout/Avatar";
@@ -66,6 +66,7 @@ export function MvpCard() {
   const [loading, setLoading] = useState(true);
   const [alvo, setAlvo] = useState<Participante | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const montadoRef = useRef(true);
 
   const carregar = useCallback(async () => {
     if (!playerId) {
