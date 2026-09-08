@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
-import { TopBar } from "@/components/layout/TopBar";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { RankingScreen } from "@/features/ranking/RankingScreen";
 
@@ -18,7 +17,6 @@ export const Route = createFileRoute("/ranking")({
   }),
   component: () => (
     <RequireAuth>
-      <TopBar />
       <AppShell>
         <RankingScreen />
       </AppShell>

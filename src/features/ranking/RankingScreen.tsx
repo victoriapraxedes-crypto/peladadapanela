@@ -133,6 +133,7 @@ export function RankingScreen() {
 
   return (
     <div className="flex flex-col gap-5">
+      <TopBar />
       <h1 className="font-display text-2xl font-bold">Ranking</h1>
 
       {/* Período */}
