@@ -26,6 +26,7 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   reloadPlayer: () => Promise<void>;
+  reloadProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -87,6 +88,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPlayer(data ?? null);
   }, [userId]);
 
+  const reloadProfile = useCallback(async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle();
+    setProfile(data ?? null);
+  }, [userId]);
+
   const signInWithGoogle = useCallback(async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
@@ -114,8 +125,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signOut,
       reloadPlayer,
+      reloadProfile,
     }),
-    [session, profile, player, sessionResolved, dataResolved, signInWithGoogle, signOut, reloadPlayer],
+    [
+      session,
+      profile,
+      player,
+      sessionResolved,
+      dataResolved,
+      signInWithGoogle,
+      signOut,
+      reloadPlayer,
+      reloadProfile,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

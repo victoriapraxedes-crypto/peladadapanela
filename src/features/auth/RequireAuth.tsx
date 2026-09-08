@@ -15,8 +15,9 @@ export function AuthLoading() {
 }
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { session, player, loading } = useAuth();
+  const { session, player, profile, loading } = useAuth();
   const navigate = useNavigate();
+  const aprovado = profile?.acesso === "aprovado";
 
   useEffect(() => {
     if (loading) return;
@@ -24,9 +25,11 @@ export function RequireAuth({ children }: { children: ReactNode }) {
       navigate({ to: "/login" });
     } else if (!player) {
       navigate({ to: "/onboarding" });
+    } else if (!aprovado) {
+      navigate({ to: "/aguardando" });
     }
-  }, [loading, session, player, navigate]);
+  }, [loading, session, player, aprovado, navigate]);
 
-  if (loading || !session || !player) return <AuthLoading />;
+  if (loading || !session || !player || !aprovado) return <AuthLoading />;
   return <>{children}</>;
 }

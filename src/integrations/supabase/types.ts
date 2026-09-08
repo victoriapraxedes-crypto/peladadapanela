@@ -400,6 +400,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          acesso: Database["public"]["Enums"]["acesso_status"]
           avatar_url: string | null
           criado_em: string
           email: string | null
@@ -408,6 +409,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
+          acesso?: Database["public"]["Enums"]["acesso_status"]
           avatar_url?: string | null
           criado_em?: string
           email?: string | null
@@ -416,6 +418,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
+          acesso?: Database["public"]["Enums"]["acesso_status"]
           avatar_url?: string | null
           criado_em?: string
           email?: string | null
@@ -667,8 +670,10 @@ export type Database = {
     Functions: {
       current_player_id: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_aprovado: { Args: never; Returns: boolean }
     }
     Enums: {
+      acesso_status: "pendente" | "aprovado" | "recusado"
       match_event_type: "gol" | "gol_contra"
       match_status: "agendada" | "em_andamento" | "finalizada"
       pe_dominante: "direito" | "esquerdo" | "ambidestro"
@@ -807,6 +812,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      acesso_status: ["pendente", "aprovado", "recusado"],
       match_event_type: ["gol", "gol_contra"],
       match_status: ["agendada", "em_andamento", "finalizada"],
       pe_dominante: ["direito", "esquerdo", "ambidestro"],

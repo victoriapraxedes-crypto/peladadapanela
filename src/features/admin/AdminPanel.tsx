@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarCog, ChevronRight, Play, Users, Shuffle } from "lucide-react";
+import { CalendarCog, ChevronRight, Play, Users, Shuffle, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -55,6 +55,12 @@ const ACOES = [
     titulo: "Iniciar partida",
     descricao: "Escolher os times e começar.",
   },
+  {
+    to: "/admin/acessos" as const,
+    icon: UserCheck,
+    titulo: "Solicitações de acesso",
+    descricao: "Aprovar quem pediu para entrar.",
+  },
 ];
 
 export function AdminPanel() {
@@ -64,7 +70,23 @@ export function AdminPanel() {
   const [confirmarEncerrar, setConfirmarEncerrar] = useState(false);
   const [encerrando, setEncerrando] = useState(false);
   const [versao, setVersao] = useState(0);
+  const [pendentes, setPendentes] = useState(0);
   const hojeISO = new Date().toISOString().slice(0, 10);
+
+  useEffect(() => {
+    let ativo = true;
+    (async () => {
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("acesso", "pendente");
+      if (ativo) setPendentes(count ?? 0);
+    })();
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
 
   useEffect(() => {
     let ativo = true;
@@ -180,13 +202,20 @@ export function AdminPanel() {
           <Link
             key={acao.titulo}
             to={acao.to}
-            className="grid min-h-[64px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 py-3"
+            className="grid min-h-[64px] grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 py-3"
           >
             <acao.icon size={20} className="text-primary" />
             <span className="min-w-0">
               <span className="block truncate text-sm font-medium text-foreground">{acao.titulo}</span>
               <span className="block truncate text-xs text-muted-foreground">{acao.descricao}</span>
             </span>
+            {acao.to === "/admin/acessos" && pendentes > 0 ? (
+              <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                {pendentes}
+              </span>
+            ) : (
+              <span />
+            )}
             <ChevronRight size={18} className="text-muted-foreground" />
           </Link>
         ))}

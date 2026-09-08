@@ -10,12 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AguardandoRouteImport } from './routes/aguardando'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PeladaRouteImport } from './routes/pelada'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAcessosRouteImport } from './routes/admin.acessos'
 import { Route as AdminJogadoresRouteImport } from './routes/admin.jogadores'
 import { Route as AdminPeladaRouteImport } from './routes/admin.pelada'
 import { Route as AdminTimesRouteImport } from './routes/admin.times'
@@ -28,6 +30,11 @@ import { Route as PartidaIdRouteImport } from './routes/partida.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AguardandoRoute = AguardandoRouteImport.update({
+  id: '/aguardando',
+  path: '/aguardando',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -58,6 +65,11 @@ const RankingRoute = RankingRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAcessosRoute = AdminAcessosRouteImport.update({
+  id: '/admin/acessos',
+  path: '/admin/acessos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminJogadoresRoute = AdminJogadoresRouteImport.update({
@@ -103,11 +115,13 @@ const PartidaIdRoute = PartidaIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aguardando': typeof AguardandoRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/times': typeof AdminTimesRoute
@@ -120,11 +134,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aguardando': typeof AguardandoRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/times': typeof AdminTimesRoute
@@ -138,11 +154,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aguardando': typeof AguardandoRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/times': typeof AdminTimesRoute
@@ -157,11 +175,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/aguardando'
     | '/login'
     | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
+    | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/times'
@@ -174,11 +194,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/aguardando'
     | '/login'
     | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
+    | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/times'
@@ -191,11 +213,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/aguardando'
     | '/login'
     | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
+    | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/times'
@@ -209,11 +233,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AguardandoRoute: typeof AguardandoRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PeladaRoute: typeof PeladaRoute
   PerfilRoute: typeof PerfilRoute
   RankingRoute: typeof RankingRoute
+  AdminAcessosRoute: typeof AdminAcessosRoute
   AdminJogadoresRoute: typeof AdminJogadoresRoute
   AdminPeladaRoute: typeof AdminPeladaRoute
   AdminTimesRoute: typeof AdminTimesRoute
@@ -232,6 +258,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aguardando': {
+      id: '/aguardando'
+      path: '/aguardando'
+      fullPath: '/aguardando'
+      preLoaderRoute: typeof AguardandoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -274,6 +307,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/acessos': {
+      id: '/admin/acessos'
+      path: '/admin/acessos'
+      fullPath: '/admin/acessos'
+      preLoaderRoute: typeof AdminAcessosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/jogadores': {
@@ -337,11 +377,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AguardandoRoute: AguardandoRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PeladaRoute: PeladaRoute,
   PerfilRoute: PerfilRoute,
   RankingRoute: RankingRoute,
+  AdminAcessosRoute: AdminAcessosRoute,
   AdminJogadoresRoute: AdminJogadoresRoute,
   AdminPeladaRoute: AdminPeladaRoute,
   AdminTimesRoute: AdminTimesRoute,
