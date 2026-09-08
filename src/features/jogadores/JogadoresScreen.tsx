@@ -195,6 +195,7 @@ export function JogadoresScreen() {
           </ul>
         )}
       </div>
+      )}
     </div>
   );
 }
