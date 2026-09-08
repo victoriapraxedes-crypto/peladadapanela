@@ -9,6 +9,8 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 import {
   BTN_BIG_SECONDARY,
   BTN_PRIMARY_64,
@@ -74,7 +76,7 @@ export function GolDrawer({ open, onOpenChange, matchId, times }: Props) {
     });
     setEnviando(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível registrar o gol. " + error.message);
       return;
     }
     toast.success("Gol registrado.");
@@ -90,7 +92,10 @@ export function GolDrawer({ open, onOpenChange, matchId, times }: Props) {
               type="button"
               onClick={voltar}
               aria-label="Voltar"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-2"
+              className={cn(
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-2 transition-colors hover:border-primary/40",
+                FOCUS_RING,
+              )}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -202,7 +207,7 @@ export function GolDrawer({ open, onOpenChange, matchId, times }: Props) {
                 disabled={enviando}
                 onClick={() => void confirmar()}
               >
-                Confirmar gol
+                {enviando ? "Confirmando..." : "Confirmar gol"}
               </button>
               <button type="button" className={BTN_SECONDARY} onClick={voltar} disabled={enviando}>
                 Voltar
