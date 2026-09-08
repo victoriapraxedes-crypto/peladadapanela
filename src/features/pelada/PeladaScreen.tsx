@@ -62,29 +62,81 @@ export function PeladaScreen() {
 
   const [pelada, setPelada] = useState<PeladaAtual | null>(null);
   const [confirmados, setConfirmados] = useState<Confirmado[]>([]);
+  const [naoConfirmados, setNaoConfirmados] = useState<Confirmado[]>([]);
   const [times, setTimes] = useState<TimeComJogadores[]>([]);
   const [partidas, setPartidas] = useState<PartidaResumo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [presencaBusyId, setPresencaBusyId] = useState<string | null>(null);
 
   const hojeISO = new Date().toISOString().slice(0, 10);
 
+  // "Ainda não confirmaram" é derivado: não existe estado "recusado" no banco,
+  // a linha em pelada_players existe ou não existe.
   const fetchConfirmados = useCallback(async (peladaId: string) => {
-    const { data } = await supabase
-      .from("pelada_players")
-      .select("player_id, players(id, apelido, foto_url, posicao_principal)")
-      .eq("pelada_id", peladaId);
+    const [{ data }, { data: ativos }] = await Promise.all([
+      supabase
+        .from("pelada_players")
+        .select("player_id, players(id, apelido, foto_url, posicao_principal)")
+        .eq("pelada_id", peladaId),
+      supabase
+        .from("players")
+        .select("id, apelido, foto_url, posicao_principal")
+        .eq("ativo", true)
+        .order("apelido", { ascending: true }),
+    ]);
 
-    setConfirmados(
-      (data ?? [])
-        .filter((row) => row.players)
-        .map((row) => ({
-          id: row.player_id,
-          apelido: row.players!.apelido,
-          fotoUrl: row.players!.foto_url,
-          posicao: row.players!.posicao_principal,
+    const lista = (data ?? [])
+      .filter((row) => row.players)
+      .map((row) => ({
+        id: row.player_id,
+        apelido: row.players!.apelido,
+        fotoUrl: row.players!.foto_url,
+        posicao: row.players!.posicao_principal,
+      }));
+    setConfirmados(lista);
+
+    const confirmadosIds = new Set(lista.map((c) => c.id));
+    setNaoConfirmados(
+      (ativos ?? [])
+        .filter((p) => !confirmadosIds.has(p.id))
+        .map((p) => ({
+          id: p.id,
+          apelido: p.apelido,
+          fotoUrl: p.foto_url,
+          posicao: p.posicao_principal,
         })),
     );
   }, []);
+
+  const removerPresenca = async (peladaId: string, c: Confirmado) => {
+    if (presencaBusyId) return;
+    setPresencaBusyId(c.id);
+    const { error } = await supabase
+      .from("pelada_players")
+      .delete()
+      .eq("pelada_id", peladaId)
+      .eq("player_id", c.id);
+    if (error) toast.error(error.message);
+    else {
+      await fetchConfirmados(peladaId);
+      toast.success(`${c.apelido} removido.`);
+    }
+    setPresencaBusyId(null);
+  };
+
+  const adicionarPresenca = async (peladaId: string, c: Confirmado) => {
+    if (presencaBusyId) return;
+    setPresencaBusyId(c.id);
+    const { error } = await supabase
+      .from("pelada_players")
+      .insert({ pelada_id: peladaId, player_id: c.id });
+    if (error) toast.error(error.message);
+    else {
+      await fetchConfirmados(peladaId);
+      toast.success(`${c.apelido} confirmado.`);
+    }
+    setPresencaBusyId(null);
+  };
 
   useEffect(() => {
     let ativo = true;
