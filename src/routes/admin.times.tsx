@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, ComingSoon } from "@/components/layout/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
 import { RequireAdmin } from "@/features/auth/RequireAdmin";
+import { AdminTimesScreen } from "@/features/admin/AdminTimesScreen";
 
 export const Route = createFileRoute("/admin/times")({
   ssr: false,
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/admin/times")({
   component: () => (
     <RequireAdmin>
       <AppShell>
-        <ComingSoon title="Montar times" description="Aqui você vai distribuir os confirmados e iniciar as partidas." />
+        <AdminTimesScreen />
       </AppShell>
     </RequireAdmin>
   ),
