@@ -277,7 +277,10 @@ export function PeladaScreen() {
           {isAdmin && (
             <Link
               to="/admin/pelada"
-              className="mt-5 flex h-[52px] w-full items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim"
+              className={cn(
+                "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground transition-colors hover:bg-primary-dim",
+                FOCUS_RING,
+              )}
             >
               Criar pelada
             </Link>
@@ -335,14 +338,19 @@ export function PeladaScreen() {
                   <InitialsAvatar apelido={c.apelido} size={36} />
                 )}
                 <span className="truncate text-sm text-foreground">{c.apelido}</span>
-                <span className="text-xs text-muted-foreground">{POSICAO_LABEL[c.posicao]}</span>
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                  {POSICAO_LABEL[c.posicao]}
+                </span>
                 {isAdmin && (
                   <button
                     type="button"
                     aria-label={"Remover " + c.apelido}
                     disabled={presencaBusyId === c.id}
                     onClick={() => void removerPresenca(pelada.id, c)}
-                    className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-destructive disabled:opacity-50"
+                    className={cn(
+                      "flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50",
+                      FOCUS_RING,
+                    )}
                   >
                     <X size={16} />
                   </button>
