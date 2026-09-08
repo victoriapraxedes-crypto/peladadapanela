@@ -32,7 +32,7 @@ const PES: { value: Pe; label: string }[] = [
 ];
 
 const INPUT =
-  "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none focus:border-primary";
+  "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 const SECTION_LABEL =
   "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 
@@ -110,7 +110,7 @@ export function AdminJogadoresScreen() {
     });
 
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível cadastrar o jogador. " + error.message);
       setSaving(false);
       return;
     }
@@ -127,7 +127,7 @@ export function AdminJogadoresScreen() {
     setTogglingId(p.id);
     const { error } = await supabase.from("players").update({ ativo: !p.ativo }).eq("id", p.id);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível atualizar o jogador. " + error.message);
     } else {
       await carregar();
       toast.success(p.ativo ? `${p.apelido} ficou inativo.` : `${p.apelido} está ativo.`);

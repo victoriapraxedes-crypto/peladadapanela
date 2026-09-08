@@ -48,7 +48,7 @@ export function AdminAcessosScreen() {
       .select("id, nome, email, avatar_url, criado_em")
       .eq("acesso", filtro)
       .order("criado_em", { ascending: true });
-    if (error) toast.error(error.message);
+    if (error) toast.error("Não foi possível carregar as solicitações. " + error.message);
     setLista((data as Solicitacao[]) ?? []);
     setLoading(false);
   }, [filtro]);
@@ -69,7 +69,7 @@ export function AdminAcessosScreen() {
       setSalvandoId(null);
       setRecusarAlvo(null);
       if (error) {
-        toast.error(error.message);
+        toast.error("Não foi possível atualizar o acesso. " + error.message);
         return;
       }
       // Um update barrado pela RLS não gera erro: apenas não afeta nenhuma linha.

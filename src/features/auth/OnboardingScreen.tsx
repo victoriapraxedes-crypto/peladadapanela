@@ -106,7 +106,7 @@ export function OnboardingScreen() {
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               required
-              className="h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none focus:border-primary"
+              className="h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             />
           </div>
 
@@ -120,7 +120,7 @@ export function OnboardingScreen() {
               maxLength={16}
               onChange={(e) => setApelido(e.target.value)}
               required
-              className="h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none focus:border-primary"
+              className="h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             />
             <p className="text-xs text-muted-foreground">
               É o nome que aparece no placar e no ranking. Até 16 caracteres.
@@ -173,7 +173,7 @@ export function OnboardingScreen() {
               max={99}
               value={numero}
               onChange={(e) => setNumero(e.target.value)}
-              className="h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none focus:border-primary"
+              className="h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             />
           </div>
 
