@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AguardandoRouteImport } from './routes/aguardando'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PeladaRouteImport } from './routes/pelada'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAcessosRouteImport } from './routes/admin.acessos'
 import { Route as AdminJogadoresRouteImport } from './routes/admin.jogadores'
@@ -44,6 +46,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -69,6 +76,12 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -129,11 +142,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aguardando': typeof AguardandoRoute
   '/login': typeof LoginRoute
+  '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
@@ -150,11 +165,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aguardando': typeof AguardandoRoute
   '/login': typeof LoginRoute
+  '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
@@ -172,11 +189,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/aguardando': typeof AguardandoRoute
   '/login': typeof LoginRoute
+  '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
@@ -195,11 +214,13 @@ export interface FileRouteTypes {
     | '/'
     | '/aguardando'
     | '/login'
+    | '/mcp'
     | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
     | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
@@ -216,11 +237,13 @@ export interface FileRouteTypes {
     | '/'
     | '/aguardando'
     | '/login'
+    | '/mcp'
     | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
     | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
@@ -237,11 +260,13 @@ export interface FileRouteTypes {
     | '/'
     | '/aguardando'
     | '/login'
+    | '/mcp'
     | '/onboarding'
     | '/pelada'
     | '/perfil'
     | '/ranking'
     | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
@@ -259,11 +284,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AguardandoRoute: typeof AguardandoRoute
   LoginRoute: typeof LoginRoute
+  McpRoute: typeof McpRoute
   OnboardingRoute: typeof OnboardingRoute
   PeladaRoute: typeof PeladaRoute
   PerfilRoute: typeof PerfilRoute
   RankingRoute: typeof RankingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AdminAcessosRoute: typeof AdminAcessosRoute
   AdminJogadoresRoute: typeof AdminJogadoresRoute
   AdminPeladaRoute: typeof AdminPeladaRoute
@@ -300,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -333,6 +367,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -419,11 +460,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AguardandoRoute: AguardandoRoute,
   LoginRoute: LoginRoute,
+  McpRoute: McpRoute,
   OnboardingRoute: OnboardingRoute,
   PeladaRoute: PeladaRoute,
   PerfilRoute: PerfilRoute,
   RankingRoute: RankingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AdminAcessosRoute: AdminAcessosRoute,
   AdminJogadoresRoute: AdminJogadoresRoute,
   AdminPeladaRoute: AdminPeladaRoute,

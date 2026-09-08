@@ -23,7 +23,7 @@ interface AuthContextValue {
   profile: Profile | null;
   player: Player | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<{ error: string | null }>;
+  signInWithGoogle: (redirectPath?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   reloadPlayer: () => Promise<void>;
   reloadProfile: () => Promise<void>;
@@ -94,9 +94,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(data ?? null);
   }, [userId]);
 
-  const signInWithGoogle = useCallback(async () => {
+  const signInWithGoogle = useCallback(async (redirectPath?: string) => {
+    const safePath = redirectPath && redirectPath.startsWith("/") && !redirectPath.startsWith("//")
+      ? redirectPath
+      : "";
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}${safePath}`,
     });
     if (result.error) {
       return { error: result.error.message ?? "Não foi possível entrar com o Google." };
