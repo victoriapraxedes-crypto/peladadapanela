@@ -486,13 +486,14 @@ function AcessoRapido() {
 }
 
 export function HomeScreen() {
+  const dados = useDadosHome();
   return (
     <>
       <TopBar />
       <div className="grid gap-6">
         <NextPeladaCard />
-        <Destaques />
-        <RankingResumido />
+        <Destaques dados={dados} />
+        <RankingResumido dados={dados} />
         <AcessoRapido />
       </div>
     </>
