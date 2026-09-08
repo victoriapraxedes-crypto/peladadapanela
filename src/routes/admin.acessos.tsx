@@ -4,6 +4,7 @@ import { RequireAdmin } from "@/features/auth/RequireAdmin";
 import { AdminAcessosScreen } from "@/features/admin/AdminAcessosScreen";
 
 export const Route = createFileRoute("/admin/acessos")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

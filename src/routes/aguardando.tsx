@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AguardandoAprovacaoScreen } from "@/features/auth/AguardandoAprovacaoScreen";
 
 export const Route = createFileRoute("/aguardando")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

@@ -4,6 +4,7 @@ import { RequireAdmin } from "@/features/auth/RequireAdmin";
 import { AdminTimesScreen } from "@/features/admin/AdminTimesScreen";
 
 export const Route = createFileRoute("/admin/times")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

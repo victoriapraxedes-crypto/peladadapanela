@@ -4,6 +4,7 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { PeladaScreen } from "@/features/pelada/PeladaScreen";
 
 export const Route = createFileRoute("/pelada")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

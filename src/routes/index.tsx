@@ -4,6 +4,7 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { HomeScreen } from "@/features/home/HomeScreen";
 
 export const Route = createFileRoute("/")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Pelada da Panela — Início" },

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { OnboardingScreen } from "@/features/auth/OnboardingScreen";
 
 export const Route = createFileRoute("/onboarding")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

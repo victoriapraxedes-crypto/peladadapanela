@@ -16,6 +16,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PeladaRouteImport } from './routes/pelada'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as RankingRouteImport } from './routes/ranking'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAcessosRouteImport } from './routes/admin.acessos'
 import { Route as AdminJogadoresRouteImport } from './routes/admin.jogadores'
@@ -60,6 +61,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const RankingRoute = RankingRouteImport.update({
   id: '/ranking',
   path: '/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/pelada'
     | '/perfil'
     | '/ranking'
+    | '/sitemap.xml'
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/pelada'
     | '/perfil'
     | '/ranking'
+    | '/sitemap.xml'
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/pelada'
     | '/perfil'
     | '/ranking'
+    | '/sitemap.xml'
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
@@ -239,6 +251,7 @@ export interface RootRouteChildren {
   PeladaRoute: typeof PeladaRoute
   PerfilRoute: typeof PerfilRoute
   RankingRoute: typeof RankingRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminAcessosRoute: typeof AdminAcessosRoute
   AdminJogadoresRoute: typeof AdminJogadoresRoute
   AdminPeladaRoute: typeof AdminPeladaRoute
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/ranking'
       fullPath: '/ranking'
       preLoaderRoute: typeof RankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -383,6 +403,7 @@ const rootRouteChildren: RootRouteChildren = {
   PeladaRoute: PeladaRoute,
   PerfilRoute: PerfilRoute,
   RankingRoute: RankingRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminAcessosRoute: AdminAcessosRoute,
   AdminJogadoresRoute: AdminJogadoresRoute,
   AdminPeladaRoute: AdminPeladaRoute,

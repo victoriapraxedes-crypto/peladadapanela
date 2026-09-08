@@ -4,6 +4,7 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { MeuPerfilScreen } from "@/features/perfil/MeuPerfilScreen";
 
 export const Route = createFileRoute("/perfil")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

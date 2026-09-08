@@ -4,6 +4,7 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { HistoricoScreen } from "@/features/historico/HistoricoScreen";
 
 export const Route = createFileRoute("/historico/")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [
