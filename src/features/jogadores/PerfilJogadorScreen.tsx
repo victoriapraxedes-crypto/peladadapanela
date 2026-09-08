@@ -97,17 +97,27 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
           return;
         }
         const res = await supabase.from("player_stats").select("*").eq("season_id", seasonId);
-        if (ativo) setStats(res.data ?? []);
+        if (!ativo) return;
+        if (res.error) {
+          setErro(true);
+          return;
+        }
+        setStats(res.data ?? []);
       } else {
         const res = await supabase.from("player_stats_alltime").select("*");
-        if (ativo) setStats((res.data as StatsRow[] | null) ?? []);
+        if (!ativo) return;
+        if (res.error) {
+          setErro(true);
+          return;
+        }
+        setStats((res.data as StatsRow[] | null) ?? []);
       }
     }
     void loadStats();
     return () => {
       ativo = false;
     };
-  }, [periodo, seasonId]);
+  }, [periodo, seasonId, tentativa]);
 
   const minhas = useMemo(
     () => stats.find((s) => s.player_id === playerId) ?? null,
