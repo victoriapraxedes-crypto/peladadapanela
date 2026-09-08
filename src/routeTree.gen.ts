@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HistoricoRouteImport } from './routes/historico'
+import { Route as JogadoresRouteImport } from './routes/jogadores'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PeladaRouteImport } from './routes/pelada'
 import { Route as PerfilRouteImport } from './routes/perfil'
@@ -18,6 +20,16 @@ import { Route as RankingRouteImport } from './routes/ranking'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoricoRoute = HistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JogadoresRoute = JogadoresRouteImport.update({
+  id: '/jogadores',
+  path: '/jogadores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -43,6 +55,8 @@ const RankingRoute = RankingRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/historico': typeof HistoricoRoute
+  '/jogadores': typeof JogadoresRoute
   '/login': typeof LoginRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
@@ -50,6 +64,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/historico': typeof HistoricoRoute
+  '/jogadores': typeof JogadoresRoute
   '/login': typeof LoginRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
@@ -58,6 +74,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/historico': typeof HistoricoRoute
+  '/jogadores': typeof JogadoresRoute
   '/login': typeof LoginRoute
   '/pelada': typeof PeladaRoute
   '/perfil': typeof PerfilRoute
@@ -65,14 +83,38 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/pelada' | '/perfil' | '/ranking'
+  fullPaths:
+    | '/'
+    | '/historico'
+    | '/jogadores'
+    | '/login'
+    | '/pelada'
+    | '/perfil'
+    | '/ranking'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/pelada' | '/perfil' | '/ranking'
-  id: '__root__' | '/' | '/login' | '/pelada' | '/perfil' | '/ranking'
+  to:
+    | '/'
+    | '/historico'
+    | '/jogadores'
+    | '/login'
+    | '/pelada'
+    | '/perfil'
+    | '/ranking'
+  id:
+    | '__root__'
+    | '/'
+    | '/historico'
+    | '/jogadores'
+    | '/login'
+    | '/pelada'
+    | '/perfil'
+    | '/ranking'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HistoricoRoute: typeof HistoricoRoute
+  JogadoresRoute: typeof JogadoresRoute
   LoginRoute: typeof LoginRoute
   PeladaRoute: typeof PeladaRoute
   PerfilRoute: typeof PerfilRoute
@@ -86,6 +128,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historico': {
+      id: '/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof HistoricoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jogadores': {
+      id: '/jogadores'
+      path: '/jogadores'
+      fullPath: '/jogadores'
+      preLoaderRoute: typeof JogadoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -121,6 +177,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HistoricoRoute: HistoricoRoute,
+  JogadoresRoute: JogadoresRoute,
   LoginRoute: LoginRoute,
   PeladaRoute: PeladaRoute,
   PerfilRoute: PerfilRoute,
