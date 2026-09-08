@@ -17,7 +17,7 @@ export function AuthLoading() {
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, player, profile, loading } = useAuth();
   const navigate = useNavigate();
-  const aprovado = profile?.acesso === "aprovado";
+  const aprovado = profile?.acesso === "aprovado" || profile?.role === "admin";
 
   useEffect(() => {
     if (loading) return;

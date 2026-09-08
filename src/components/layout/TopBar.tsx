@@ -12,7 +12,7 @@ export function TopBar() {
 
   return (
     <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4">
-      <Logo size={32} />
+      <Logo size={36} zoom={1.35} />
       <div className="flex min-w-0 items-center gap-2">
         {profile?.role === "admin" && (
           <Link
