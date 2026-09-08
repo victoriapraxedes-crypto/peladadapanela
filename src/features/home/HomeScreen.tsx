@@ -330,10 +330,26 @@ function NextPeladaCard() {
   );
 }
 
-function Destaques() {
-  const artilheiro = [...playerStats].sort((a, b) => b.gols - a.gols)[0];
-  const artPlayer = artilheiro ? getPlayer(artilheiro.playerId) : undefined;
-  const mvpPlayer = getPlayer(recentMvp.playerId);
+function Destaques({ dados }: { dados: DadosHome | null }) {
+  if (!dados) {
+    return (
+      <section className="grid grid-cols-2 gap-3">
+        <Skeleton className="h-[132px] rounded-2xl" />
+        <Skeleton className="h-[132px] rounded-2xl" />
+      </section>
+    );
+  }
+
+  const comGols = dados.stats.filter((s) => s.gols > 0);
+  const artilheiro = [...comGols].sort((a, b) => {
+    if (b.gols !== a.gols) return b.gols - a.gols;
+    const pa = dados.players.get(a.playerId)?.apelido ?? "";
+    const pb = dados.players.get(b.playerId)?.apelido ?? "";
+    return pa.localeCompare(pb, "pt-BR");
+  })[0];
+  const artPlayer = artilheiro ? dados.players.get(artilheiro.playerId) : undefined;
+  const mvpPlayer = dados.mvp ? dados.players.get(dados.mvp.playerId) : undefined;
+  const mvpData = dados.mvp?.data.split("-");
 
   return (
     <section className="grid grid-cols-2 gap-3">
@@ -341,37 +357,67 @@ function Destaques() {
         <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
           Artilheiro
         </p>
-        <div className="mt-3 flex min-w-0 items-center gap-2">
-          <InitialsAvatar apelido={artPlayer?.apelido ?? "??"} size={32} />
-          <span className="truncate text-sm font-medium text-foreground">
-            {artPlayer?.apelido}
-          </span>
-        </div>
-        <p className="mt-3">
-          <span className="num text-2xl text-foreground">{artilheiro?.gols ?? 0}</span>{" "}
-          <span className="text-xs text-muted-foreground">gols</span>
-        </p>
+        {artilheiro ? (
+          <>
+            <div className="mt-3 flex min-w-0 items-center gap-2">
+              <Foto p={artPlayer} size={32} />
+              <span className="truncate text-sm font-medium text-foreground">
+                {artPlayer?.apelido}
+              </span>
+            </div>
+            <p className="mt-3">
+              <span className="num text-2xl text-foreground">{artilheiro.gols}</span>{" "}
+              <span className="text-xs text-muted-foreground">gols</span>
+            </p>
+          </>
+        ) : (
+          <p className="mt-3 flex min-h-[76px] items-center text-xs text-muted-foreground">
+            A artilharia aparece depois dos primeiros gols.
+          </p>
+        )}
       </div>
 
       <div className="min-w-0 rounded-2xl border border-border bg-surface p-4">
         <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
           MVP recente
         </p>
-        <div className="mt-3 flex min-w-0 items-center gap-2">
-          <InitialsAvatar apelido={mvpPlayer?.apelido ?? "??"} size={32} />
-          <span className="truncate text-sm font-medium text-foreground">
-            {mvpPlayer?.apelido}
-          </span>
-        </div>
-        <p className="mt-3 truncate text-xs text-muted-foreground">{recentMvp.peladaLabel}</p>
+        {dados.mvp ? (
+          <>
+            <div className="mt-3 flex min-w-0 items-center gap-2">
+              <Foto p={mvpPlayer} size={32} />
+              <span className="truncate text-sm font-medium text-foreground">
+                {mvpPlayer?.apelido}
+              </span>
+            </div>
+            <p className="mt-3 truncate text-xs text-muted-foreground">
+              Pelada de {mvpData?.[2]}/{mvpData?.[1]}
+            </p>
+          </>
+        ) : (
+          <p className="mt-3 flex min-h-[76px] items-center text-xs text-muted-foreground">
+            O primeiro MVP ainda está por vir.
+          </p>
+        )}
       </div>
     </section>
   );
 }
 
-function RankingResumido() {
-  const top = [...playerStats]
-    .sort((a, b) => b.aproveitamento - a.aproveitamento || b.gols - a.gols)
+function RankingResumido({ dados }: { dados: DadosHome | null }) {
+  if (!dados) {
+    return <Skeleton className="h-[280px] w-full rounded-2xl" />;
+  }
+
+  // Mesmo critério do ranking geral da /ranking.
+  const top = dados.stats
+    .filter((s) => s.jogos > 0)
+    .sort(
+      (a, b) =>
+        b.participacoesEmGols - a.participacoesEmGols ||
+        b.vitorias - a.vitorias ||
+        b.gols - a.gols ||
+        b.assistencias - a.assistencias,
+    )
     .slice(0, 5);
 
   return (
@@ -385,24 +431,37 @@ function RankingResumido() {
         </Link>
       </div>
 
-      <ul className="mt-3">
-        {top.map((s, i) => {
-          const p = getPlayer(s.playerId);
-          return (
-            <li
-              key={s.playerId}
-              className="grid grid-cols-[1.5rem_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0"
-            >
-              <span className={i === 0 ? "num text-base text-primary" : "num text-base text-muted-foreground"}>
-                {i + 1}
-              </span>
-              <InitialsAvatar apelido={p?.apelido ?? "??"} size={32} />
-              <span className="truncate text-sm text-foreground">{p?.apelido}</span>
-              <span className="num text-sm text-foreground">{s.aproveitamento}%</span>
-            </li>
-          );
-        })}
-      </ul>
+      {top.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          O ranking começa depois da primeira pelada.
+        </p>
+      ) : (
+        <ul className="mt-3">
+          {top.map((s, i) => {
+            const p = dados.players.get(s.playerId);
+            return (
+              <li key={s.playerId} className="border-b border-border last:border-b-0">
+                <Link
+                  to="/jogadores/$id"
+                  params={{ id: s.playerId }}
+                  className="grid grid-cols-[1.5rem_auto_minmax(0,1fr)_auto] items-center gap-3 py-3"
+                >
+                  <span
+                    className={
+                      i === 0 ? "num text-base text-primary" : "num text-base text-muted-foreground"
+                    }
+                  >
+                    {i + 1}
+                  </span>
+                  <Foto p={p} size={32} />
+                  <span className="truncate text-sm text-foreground">{p?.apelido}</span>
+                  <span className="num text-sm text-foreground">{s.participacoesEmGols}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
