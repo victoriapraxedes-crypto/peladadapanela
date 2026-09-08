@@ -58,9 +58,10 @@ export function LoginScreen() {
           disabled
           aria-disabled="true"
           title="Disponível em breve"
-          className="mt-4 flex min-h-[44px] w-full items-center justify-center text-sm text-muted-foreground opacity-60"
+          className="mt-4 flex min-h-[44px] w-full items-center justify-center gap-2 text-sm text-muted-foreground"
         >
           Entrar com e-mail
+          <span className="text-xs text-foreground/40">em breve</span>
         </button>
       </div>
 
