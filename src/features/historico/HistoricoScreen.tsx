@@ -52,10 +52,17 @@ export function HistoricoScreen() {
       const peladaIds = lista.map((p) => p.id);
 
       // 2) partidas dessas peladas
-      const { data: matches } = await supabase
+      const { data: matches, error: matchesErr } = await supabase
         .from("matches")
         .select("id, pelada_id")
         .in("pelada_id", peladaIds);
+      if (matchesErr) {
+        if (ativo) {
+          setErro(true);
+          setLoading(false);
+        }
+        return;
+      }
       const partidas = matches ?? [];
       const matchIds = partidas.map((m) => m.id);
 
@@ -119,7 +126,7 @@ export function HistoricoScreen() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [tentativa]);
 
   return (
     <>
