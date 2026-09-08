@@ -6,7 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FOCUS_RING } from "@/lib/ui";
 import { formatDataPorExtenso } from "@/lib/mock";
 import { PE_LABEL, POSICAO_LABEL } from "@/features/jogadores/labels";
 
@@ -43,11 +45,14 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
   const [stats, setStats] = useState<StatsRow[]>([]);
   const [periodo, setPeriodo] = useState<Periodo>("temporada");
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     async function load() {
       setLoading(true);
+      setErro(false);
       // 3 requisições: jogador, temporada ativa e peladas (join único).
       const playerRes = await supabase.from("players").select("*").eq("id", playerId).maybeSingle();
       const seasonRes = await supabase.from("seasons").select("id").eq("ativa", true).maybeSingle();
