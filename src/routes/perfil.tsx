@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, ComingSoon } from "@/components/layout/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
+import { RequireAuth } from "@/features/auth/RequireAuth";
+import { MeuPerfilScreen } from "@/features/perfil/MeuPerfilScreen";
 
 export const Route = createFileRoute("/perfil")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Perfil — Pelada da Panela" },
@@ -14,11 +17,10 @@ export const Route = createFileRoute("/perfil")({
     ],
   }),
   component: () => (
-    <AppShell>
-      <ComingSoon
-        title="Perfil"
-        description="Aqui ficam seus números da temporada, posição preferida e o elenco de jogadores."
-      />
-    </AppShell>
+    <RequireAuth>
+      <AppShell>
+        <MeuPerfilScreen />
+      </AppShell>
+    </RequireAuth>
   ),
 });
