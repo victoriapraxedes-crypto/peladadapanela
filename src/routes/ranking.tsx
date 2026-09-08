@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, ComingSoon } from "@/components/layout/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
+import { RequireAuth } from "@/features/auth/RequireAuth";
+import { RankingScreen } from "@/features/ranking/RankingScreen";
 
 export const Route = createFileRoute("/ranking")({
   head: () => ({
@@ -14,11 +16,10 @@ export const Route = createFileRoute("/ranking")({
     ],
   }),
   component: () => (
-    <AppShell>
-      <ComingSoon
-        title="Ranking"
-        description="Aqui vai entrar a classificação completa da temporada, com gols, assistências e aproveitamento."
-      />
-    </AppShell>
+    <RequireAuth>
+      <AppShell>
+        <RankingScreen />
+      </AppShell>
+    </RequireAuth>
   ),
 });
