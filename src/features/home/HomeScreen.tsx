@@ -50,11 +50,14 @@ function Foto({ p, size }: { p: PlayerInfo | undefined; size: number }) {
 
 function useDadosHome() {
   const [dados, setDados] = useState<DadosHome | null>(null);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     (async () => {
-      const { data: season } = await supabase
+      setErro(false);
+      const { data: season, error: seasonErr } = await supabase
         .from("seasons")
         .select("id")
         .eq("ativa", true)
