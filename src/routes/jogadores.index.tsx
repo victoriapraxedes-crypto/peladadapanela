@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, ComingSoon } from "@/components/layout/AppShell";
 
-export const Route = createFileRoute("/jogadores")({
+export const Route = createFileRoute("/jogadores/")({
   head: () => ({
     meta: [
       { title: "Jogadores — Pelada da Panela" },
