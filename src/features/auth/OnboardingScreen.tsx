@@ -89,7 +89,7 @@ export function OnboardingScreen() {
       <div className="mx-auto w-full max-w-md">
         <Logo size={56} />
         <h1 className="mt-6 font-display text-3xl font-bold uppercase leading-tight tracking-[-0.02em] text-foreground">
-          Quase lá
+          Complete seu perfil
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">Só faltam seus dados de jogador.</p>
 
