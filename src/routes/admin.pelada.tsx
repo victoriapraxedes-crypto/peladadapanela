@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, ComingSoon } from "@/components/layout/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
 import { RequireAdmin } from "@/features/auth/RequireAdmin";
+import { AdminPeladaScreen } from "@/features/admin/AdminPeladaScreen";
 
 export const Route = createFileRoute("/admin/pelada")({
   ssr: false,
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/admin/pelada")({
   component: () => (
     <RequireAdmin>
       <AppShell>
-        <ComingSoon title="Editar pelada" description="Aqui você vai criar e editar data, horário, local e status." />
+        <AdminPeladaScreen />
       </AppShell>
     </RequireAdmin>
   ),
