@@ -215,7 +215,7 @@ export function PeladaScreen() {
     return () => {
       ativo = false;
     };
-  }, [hojeISO, fetchConfirmados]);
+  }, [hojeISO, fetchConfirmados, tentativa]);
 
   useEffect(() => {
     if (!pelada) return;
@@ -239,6 +239,17 @@ export function PeladaScreen() {
       void supabase.removeChannel(channel);
     };
   }, [pelada, fetchConfirmados]);
+
+  if (erro) {
+    return (
+      <>
+        <TopBar />
+        <div className="mt-2">
+          <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+        </div>
+      </>
+    );
+  }
 
   if (loading) {
     return (
