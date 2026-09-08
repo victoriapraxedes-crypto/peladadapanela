@@ -101,10 +101,16 @@ export function JogadoresScreen() {
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar por nome ou apelido"
           aria-label="Buscar por nome ou apelido"
-          className="h-[52px] w-full rounded-xl border border-border bg-surface-2 pl-11 pr-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50"
+          className={cn(
+            "h-[52px] w-full rounded-xl border border-border bg-surface-2 pl-11 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/50",
+            FOCUS_RING,
+          )}
         />
       </div>
 
+      {erro ? (
+        <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+      ) : (
       <div className="rounded-2xl border border-border bg-surface">
         {loading ? (
           <div className="flex flex-col gap-4 p-5">
@@ -127,7 +133,10 @@ export function JogadoresScreen() {
             {isAdmin ? (
               <Link
                 to="/admin/jogadores"
-                className="inline-flex min-h-[44px] items-center rounded-xl border border-border px-4 text-sm text-foreground"
+                className={cn(
+                  "inline-flex min-h-[44px] items-center rounded-xl border border-border px-4 text-sm text-foreground transition-colors hover:border-primary/40",
+                  FOCUS_RING,
+                )}
               >
                 Cadastrar jogadores
               </Link>
