@@ -344,7 +344,10 @@ export function PartidaScreen({ id }: { id: string }) {
                     <button
                       type="button"
                       onClick={() => setEventoEditando(e)}
-                      className="flex min-h-[56px] w-full items-center gap-3 py-3 text-left"
+                      className={cn(
+                        "flex min-h-[56px] w-full items-center gap-3 rounded-lg py-3 text-left transition-colors hover:text-primary",
+                        FOCUS_RING,
+                      )}
                     >
                       {conteudo}
                     </button>
@@ -364,7 +367,10 @@ export function PartidaScreen({ id }: { id: string }) {
         <button
           type="button"
           onClick={() => setEncerrarAberto(true)}
-          className="mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-destructive/40 bg-transparent text-sm font-medium text-destructive"
+          className={cn(
+            "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-destructive/40 bg-transparent text-sm font-medium text-destructive transition-colors hover:bg-destructive/10",
+            FOCUS_RING,
+          )}
         >
           Encerrar partida
         </button>
