@@ -456,7 +456,7 @@ export function PartidaScreen({ id }: { id: string }) {
                     void encerrar();
                   }}
                 >
-                  Encerrar
+                  {ocupado ? "Encerrando..." : "Encerrar"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
