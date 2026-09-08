@@ -4,6 +4,7 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { RankingScreen } from "@/features/ranking/RankingScreen";
 
 export const Route = createFileRoute("/ranking")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Ranking — Pelada da Panela" },

@@ -4,6 +4,7 @@ import { RequireAdmin } from "@/features/auth/RequireAdmin";
 import { AdminPeladaScreen } from "@/features/admin/AdminPeladaScreen";
 
 export const Route = createFileRoute("/admin/pelada")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

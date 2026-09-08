@@ -4,6 +4,7 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { JogadoresScreen } from "@/features/jogadores/JogadoresScreen";
 
 export const Route = createFileRoute("/jogadores/")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Jogadores — Pelada da Panela" },

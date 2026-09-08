@@ -4,6 +4,7 @@ import { RequireAdmin } from "@/features/auth/RequireAdmin";
 import { AdminPanel } from "@/features/admin/AdminPanel";
 
 export const Route = createFileRoute("/admin/")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

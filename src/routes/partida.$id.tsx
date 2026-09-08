@@ -4,6 +4,7 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { PartidaScreen } from "@/features/partida/PartidaScreen";
 
 export const Route = createFileRoute("/partida/$id")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

@@ -4,6 +4,7 @@ import { RequireAdmin } from "@/features/auth/RequireAdmin";
 import { AdminJogadoresScreen } from "@/features/admin/AdminJogadoresScreen";
 
 export const Route = createFileRoute("/admin/jogadores")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [

@@ -4,6 +4,7 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { PeladaHistoricoScreen } from "@/features/historico/PeladaHistoricoScreen";
 
 export const Route = createFileRoute("/historico/$peladaId")({
+  staticData: { sitemap: false },
   ssr: false,
   head: () => ({
     meta: [
