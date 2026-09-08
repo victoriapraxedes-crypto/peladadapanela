@@ -79,7 +79,7 @@ export function PeladaScreen() {
   // "Ainda não confirmaram" é derivado: não existe estado "recusado" no banco,
   // a linha em pelada_players existe ou não existe.
   const fetchConfirmados = useCallback(async (peladaId: string) => {
-    const [{ data }, { data: ativos }] = await Promise.all([
+    const [{ data, error: errConf }, { data: ativos, error: errAtivos }] = await Promise.all([
       supabase
         .from("pelada_players")
         .select("player_id, players(id, apelido, foto_url, posicao_principal)")
@@ -90,6 +90,11 @@ export function PeladaScreen() {
         .eq("ativo", true)
         .order("apelido", { ascending: true }),
     ]);
+
+    if (errConf || errAtivos) {
+      setErro(true);
+      return;
+    }
 
     const lista = (data ?? [])
       .filter((row) => row.players)
