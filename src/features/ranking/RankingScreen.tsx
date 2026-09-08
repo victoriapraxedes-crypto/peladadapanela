@@ -247,7 +247,7 @@ export function RankingScreen() {
                     <img
                       src={player.foto_url}
                       alt={player.apelido}
-                      className="h-10 w-10 rounded-full object-cover"
+                      className="h-10 w-10 shrink-0 rounded-full object-cover"
                     />
                   ) : (
                     <InitialsAvatar apelido={player.apelido} size={40} />
@@ -256,13 +256,14 @@ export function RankingScreen() {
                     <p className="truncate text-sm text-foreground">{player.apelido}</p>
                     <p className="truncate text-xs text-muted-foreground">{SUBLINHA[metrica](s)}</p>
                   </div>
-                  <span className="num text-2xl text-foreground">{VALOR[metrica](s)}</span>
+                  <span className="num shrink-0 text-2xl text-foreground">{VALOR[metrica](s)}</span>
                 </Link>
               </li>
             ))}
           </ul>
         )}
       </div>
+      )}
     </div>
   );
 }
