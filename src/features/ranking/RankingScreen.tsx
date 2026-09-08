@@ -203,6 +203,9 @@ export function RankingScreen() {
       </div>
 
       {/* Lista */}
+      {erro ? (
+        <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+      ) : (
       <div className="rounded-2xl border border-border bg-surface">
         {loading ? (
           <div className="flex flex-col gap-4 p-5">
@@ -227,7 +230,11 @@ export function RankingScreen() {
                 <Link
                   to="/jogadores/$id"
                   params={{ id: s.player_id! }}
-                  className="grid min-h-[56px] grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-2 last:border-b-0">
+                  className={cn(
+                    "grid min-h-[56px] grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-2 transition-colors last:border-b-0 hover:bg-surface-2",
+                    FOCUS_RING,
+                  )}
+                >
                   <span
                     className={cn(
                       "num w-6 text-center text-base",
