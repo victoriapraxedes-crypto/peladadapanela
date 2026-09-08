@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { Plus, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
