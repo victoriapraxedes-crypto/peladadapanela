@@ -75,7 +75,7 @@ function useDadosHome() {
               .from("player_stats")
               .select("player_id, jogos, vitorias, gols, assistencias, participacoes_em_gols")
               .eq("season_id", season.id)
-          : Promise.resolve({ data: [] as never[] }),
+          : Promise.resolve({ data: [] as never[], error: null }),
         supabase.from("players").select("id, apelido, foto_url"),
         supabase.from("mvp_winners").select("player_id, pelada_id"),
         supabase
@@ -86,6 +86,12 @@ function useDadosHome() {
       ]);
 
       if (!ativo) return;
+
+      if (seasonErr || statErr || playerErr || winnerErr || peladaErr) {
+        setErro(true);
+        setDados(null);
+        return;
+      }
 
       const players = new Map<string, PlayerInfo>();
       for (const p of playerRows ?? []) {
