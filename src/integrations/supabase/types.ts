@@ -17,6 +17,7 @@ export type Database = {
       match_events: {
         Row: {
           assist_player_id: string | null
+          created_by: string | null
           criado_em: string
           id: string
           match_id: string
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           assist_player_id?: string | null
+          created_by?: string | null
           criado_em?: string
           id?: string
           match_id: string
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           assist_player_id?: string | null
+          created_by?: string | null
           criado_em?: string
           id?: string
           match_id?: string
@@ -58,6 +61,13 @@ export type Database = {
             columns: ["assist_player_id"]
             isOneToOne: false
             referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
