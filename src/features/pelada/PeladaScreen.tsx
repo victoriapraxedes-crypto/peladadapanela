@@ -405,22 +405,24 @@ export function PeladaScreen() {
         ) : (
           <ul className="mt-3 rounded-2xl border border-border bg-surface px-5">
             {partidas.map((p) => (
-              // TODO: link para /partida/$id no bloco 3
-              <li
-                key={p.id}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border py-4 last:border-b-0"
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-sm text-foreground">
-                    {p.timeA} x {p.timeB}
+              <li key={p.id} className="border-b border-border last:border-b-0">
+                <Link
+                  to="/partida/$id"
+                  params={{ id: p.id }}
+                  className="grid min-h-[44px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm text-foreground">
+                      {p.timeA} x {p.timeB}
+                    </span>
+                    <span className="mt-1 block">
+                      <StatusBadge status={p.status} />
+                    </span>
                   </span>
-                  <span className="mt-1 block">
-                    <StatusBadge status={p.status} />
+                  <span className="num text-xl text-foreground">
+                    {p.placarA} – {p.placarB}
                   </span>
-                </span>
-                <span className="num text-xl text-foreground">
-                  {p.placarA} – {p.placarB}
-                </span>
+                </Link>
               </li>
             ))}
           </ul>
