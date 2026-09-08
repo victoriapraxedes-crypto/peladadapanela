@@ -9,7 +9,7 @@ export default defineTool({
   description: "Lista as peladas (data, horário, local e status), da mais recente para a mais antiga.",
   inputSchema: {
     status: z
-      .enum(["agendada", "em_andamento", "finalizada"])
+      .enum(["aberta", "confirmacao", "times_definidos", "em_andamento", "finalizada"])
       .optional()
       .describe("Filtra por status da pelada."),
     limit: z.number().int().min(1).max(50).default(10).describe("Quantidade máxima de peladas."),

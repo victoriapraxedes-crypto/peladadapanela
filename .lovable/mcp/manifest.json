@@ -33,7 +33,9 @@
               "description": "Filtra por status da pelada.",
               "type": "string",
               "enum": [
-                "agendada",
+                "aberta",
+                "confirmacao",
+                "times_definidos",
                 "em_andamento",
                 "finalizada"
               ]

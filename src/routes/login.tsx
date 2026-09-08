@@ -3,9 +3,8 @@ import { LoginScreen } from "@/features/auth/LoginScreen";
 
 export const Route = createFileRoute("/login")({
   staticData: { sitemap: true },
-  validateSearch: (s: Record<string, unknown>) => ({
-    next: typeof s['next'] === "string" ? s['next'] : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { next?: string } =>
+    typeof s['next'] === "string" ? { next: s['next'] } : {},
   head: () => ({
     meta: [
       { title: "Entrar — Pelada da Panela" },
