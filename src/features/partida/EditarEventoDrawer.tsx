@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 import {
   BTN_PRIMARY_64,
   BTN_SECONDARY,
@@ -70,7 +72,7 @@ export function EditarEventoDrawer({ evento, onOpenChange, times }: Props) {
       .eq("id", evento.id);
     setSalvando(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível salvar o evento. " + error.message);
       return;
     }
     toast.success("Evento atualizado.");
@@ -84,7 +86,7 @@ export function EditarEventoDrawer({ evento, onOpenChange, times }: Props) {
     setSalvando(false);
     setConfirmandoExclusao(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível excluir o evento. " + error.message);
       return;
     }
     toast.success("Evento excluído.");
@@ -148,11 +150,14 @@ export function EditarEventoDrawer({ evento, onOpenChange, times }: Props) {
               disabled={salvando || !autorId}
               onClick={() => void salvar()}
             >
-              Salvar alterações
+              {salvando ? "Salvando..." : "Salvar alterações"}
             </button>
             <button
               type="button"
-              className="mt-3 flex h-[52px] w-full items-center justify-center rounded-xl border border-destructive/40 bg-transparent text-sm font-medium text-destructive disabled:opacity-60"
+              className={cn(
+                "mt-3 flex h-[52px] w-full items-center justify-center rounded-xl border border-destructive/40 bg-transparent text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-60",
+                FOCUS_RING,
+              )}
               disabled={salvando}
               onClick={() => setConfirmandoExclusao(true)}
             >
@@ -172,7 +177,15 @@ export function EditarEventoDrawer({ evento, onOpenChange, times }: Props) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void excluir()}>Excluir</AlertDialogAction>
+            <AlertDialogAction
+              disabled={salvando}
+              onClick={(event) => {
+                event.preventDefault();
+                void excluir();
+              }}
+            >
+              {salvando ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
