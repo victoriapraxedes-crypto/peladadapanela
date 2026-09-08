@@ -129,9 +129,9 @@ function useDadosHome() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [tentativa]);
 
-  return dados;
+  return { dados, erro, recarregar: () => setTentativa((t) => t + 1) };
 }
 
 interface PeladaAtual {
