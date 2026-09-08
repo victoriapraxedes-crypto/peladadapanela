@@ -7,6 +7,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
+import { MvpCard } from "@/features/pelada/MvpCard";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -329,6 +330,8 @@ export function PeladaScreen() {
           </ul>
         )}
       </section>
+
+      <MvpCard />
 
       {isAdmin && (
         <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
