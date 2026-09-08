@@ -19,8 +19,7 @@ const STATUS_OPCOES: { value: PeladaStatus; label: string }[] = [
 
 const INPUT =
   "h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-const SECTION_LABEL =
-  "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 
 interface PeladaRow {
   id: string;
@@ -107,10 +106,7 @@ export function AdminPeladaScreen() {
     };
   }, [carregar, preencher]);
 
-  const temporadaAtiva = useMemo(
-    () => seasons.find((s) => s.ativa) ?? seasons[0],
-    [seasons],
-  );
+  const temporadaAtiva = useMemo(() => seasons.find((s) => s.ativa) ?? seasons[0], [seasons]);
 
   const selecionar = (id: string) => {
     if (id === "") {

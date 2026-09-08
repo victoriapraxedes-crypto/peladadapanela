@@ -57,8 +57,7 @@ interface PartidaResumo {
   status: MatchStatus;
 }
 
-const SECTION_LABEL =
-  "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 
 export function PeladaScreen() {
   const { profile } = useAuth();
@@ -188,7 +187,9 @@ export function PeladaScreen() {
           .order("ordem", { ascending: true }),
         supabase
           .from("matches")
-          .select("id, ordem, placar_a, placar_b, status, team_a:team_a_id(nome), team_b:team_b_id(nome)")
+          .select(
+            "id, ordem, placar_a, placar_b, status, team_a:team_a_id(nome), team_b:team_b_id(nome)",
+          )
           .eq("pelada_id", data.id)
           .order("ordem", { ascending: true }),
       ]);

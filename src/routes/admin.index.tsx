@@ -8,7 +8,10 @@ export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "Painel admin — Pelada da Panela" },
-      { name: "description", content: "Painel de administração da pelada: próxima data, jogadores e times." },
+      {
+        name: "description",
+        content: "Painel de administração da pelada: próxima data, jogadores e times.",
+      },
       { property: "og:title", content: "Painel admin — Pelada da Panela" },
       { property: "og:description", content: "Painel de administração da pelada." },
     ],

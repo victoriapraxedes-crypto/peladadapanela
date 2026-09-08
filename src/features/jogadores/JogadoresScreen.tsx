@@ -111,90 +111,90 @@ export function JogadoresScreen() {
       {erro ? (
         <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
       ) : (
-      <div className="rounded-2xl border border-border bg-surface">
-        {loading ? (
-          <div className="flex flex-col gap-4 p-5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex h-[44px] items-center gap-3">
-                <Skeleton className="h-11 w-11 rounded-full" />
-                <div className="flex flex-1 flex-col gap-2">
-                  <Skeleton className="h-3 w-2/5" />
-                  <Skeleton className="h-3 w-1/4" />
+        <div className="rounded-2xl border border-border bg-surface">
+          {loading ? (
+            <div className="flex flex-col gap-4 p-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex h-[44px] items-center gap-3">
+                  <Skeleton className="h-11 w-11 rounded-full" />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <Skeleton className="h-3 w-2/5" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
+                  <Skeleton className="h-6 w-24" />
                 </div>
-                <Skeleton className="h-6 w-24" />
-              </div>
-            ))}
-          </div>
-        ) : players.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 p-10">
-            <p className="text-center text-sm text-muted-foreground">
-              Nenhum jogador cadastrado ainda.
-            </p>
-            {isAdmin ? (
-              <Link
-                to="/admin/jogadores"
-                className={cn(
-                  "inline-flex min-h-[44px] items-center rounded-xl border border-border px-4 text-sm text-foreground transition-colors hover:border-primary/40",
-                  FOCUS_RING,
-                )}
-              >
-                Cadastrar jogadores
-              </Link>
-            ) : null}
-          </div>
-        ) : lista.length === 0 ? (
-          <p className="p-10 text-center text-sm text-muted-foreground">
-            Ninguém encontrado com esse nome.
-          </p>
-        ) : (
-          <ul>
-            {lista.map(({ player, stats: s }) => (
-              <li key={player.id}>
+              ))}
+            </div>
+          ) : players.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 p-10">
+              <p className="text-center text-sm text-muted-foreground">
+                Nenhum jogador cadastrado ainda.
+              </p>
+              {isAdmin ? (
                 <Link
-                  to="/jogadores/$id"
-                  params={{ id: player.id }}
+                  to="/admin/jogadores"
                   className={cn(
-                    "flex min-h-[56px] items-center gap-3 border-b border-border px-4 py-2 transition-colors last:border-b-0 hover:bg-surface-2 sm:px-5",
+                    "inline-flex min-h-[44px] items-center rounded-xl border border-border px-4 text-sm text-foreground transition-colors hover:border-primary/40",
                     FOCUS_RING,
                   )}
                 >
-                  {player.foto_url ? (
-                    <img
-                      src={player.foto_url}
-                      alt={player.apelido}
-                      className="h-11 w-11 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <InitialsAvatar apelido={player.apelido} size={44} />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-foreground">{player.apelido}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {POSICAO_LABEL[player.posicao_principal]}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 gap-2 sm:gap-4">
-                    {(
-                      [
-                        ["Jogos", s?.jogos ?? 0],
-                        ["Gols", s?.gols ?? 0],
-                        ["Assist", s?.assistencias ?? 0],
-                      ] as const
-                    ).map(([label, valor]) => (
-                      <div key={label} className="flex w-9 flex-col items-center sm:w-10">
-                        <span className="num text-base text-foreground">{valor}</span>
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                          {label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  Cadastrar jogadores
                 </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+              ) : null}
+            </div>
+          ) : lista.length === 0 ? (
+            <p className="p-10 text-center text-sm text-muted-foreground">
+              Ninguém encontrado com esse nome.
+            </p>
+          ) : (
+            <ul>
+              {lista.map(({ player, stats: s }) => (
+                <li key={player.id}>
+                  <Link
+                    to="/jogadores/$id"
+                    params={{ id: player.id }}
+                    className={cn(
+                      "flex min-h-[56px] items-center gap-3 border-b border-border px-4 py-2 transition-colors last:border-b-0 hover:bg-surface-2 sm:px-5",
+                      FOCUS_RING,
+                    )}
+                  >
+                    {player.foto_url ? (
+                      <img
+                        src={player.foto_url}
+                        alt={player.apelido}
+                        className="h-11 w-11 shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <InitialsAvatar apelido={player.apelido} size={44} />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-foreground">{player.apelido}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {POSICAO_LABEL[player.posicao_principal]}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2 sm:gap-4">
+                      {(
+                        [
+                          ["Jogos", s?.jogos ?? 0],
+                          ["Gols", s?.gols ?? 0],
+                          ["Assist", s?.assistencias ?? 0],
+                        ] as const
+                      ).map(([label, valor]) => (
+                        <div key={label} className="flex w-9 flex-col items-center sm:w-10">
+                          <span className="num text-base text-foreground">{valor}</span>
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );

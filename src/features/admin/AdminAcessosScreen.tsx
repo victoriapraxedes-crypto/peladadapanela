@@ -179,8 +179,8 @@ export function AdminAcessosScreen() {
               Recusar o acesso de {recusarAlvo?.nome || recusarAlvo?.email}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              A pessoa vai ver um aviso de que o acesso não foi liberado. Você pode aprovar depois se
-              mudar de ideia.
+              A pessoa vai ver um aviso de que o acesso não foi liberado. Você pode aprovar depois
+              se mudar de ideia.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -327,7 +327,9 @@ function NextPeladaCard() {
       </div>
 
       {total === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">Ninguém confirmou ainda. Seja o primeiro.</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Ninguém confirmou ainda. Seja o primeiro.
+        </p>
       ) : (
         <div className="mt-3 flex items-center">
           {visiveis.map((c, i) => (
@@ -363,11 +365,7 @@ function NextPeladaCard() {
         )}
       >
         {!enviando && confirmado && <Check size={18} className="text-success" />}
-        {enviando
-          ? "Confirmando..."
-          : confirmado
-            ? "Presença confirmada"
-            : "Confirmar presença"}
+        {enviando ? "Confirmando..." : confirmado ? "Presença confirmada" : "Confirmar presença"}
       </button>
     </CardFrame>
   );

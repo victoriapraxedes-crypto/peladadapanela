@@ -24,8 +24,7 @@ import { formatDataPorExtenso } from "@/lib/format";
 // convite para votar acompanha a pessoa até ela votar, mesmo que a próxima
 // pelada já esteja marcada.
 
-const SECTION_LABEL =
-  "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 
 interface Participante {
   id: string;

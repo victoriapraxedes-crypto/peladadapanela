@@ -5,12 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -184,11 +179,7 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
         <div className="grid max-h-[70vh] gap-6 overflow-y-auto px-5 pb-8">
           <div className="grid justify-items-center gap-3">
             {fotoUrl ? (
-              <img
-                src={fotoUrl}
-                alt={apelido}
-                className="h-24 w-24 rounded-full object-cover"
-              />
+              <img src={fotoUrl} alt={apelido} className="h-24 w-24 rounded-full object-cover" />
             ) : (
               <InitialsAvatar apelido={apelido || nome} size={96} />
             )}

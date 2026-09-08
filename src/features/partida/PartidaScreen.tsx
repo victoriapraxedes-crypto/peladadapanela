@@ -112,8 +112,16 @@ export function PartidaScreen({ id }: { id: string }) {
 
     setPartida({
       id: data.id,
-      timeA: { id: data.team_a_id, nome: data.team_a?.nome ?? "Time A", jogadores: porTime(data.team_a_id) },
-      timeB: { id: data.team_b_id, nome: data.team_b?.nome ?? "Time B", jogadores: porTime(data.team_b_id) },
+      timeA: {
+        id: data.team_a_id,
+        nome: data.team_a?.nome ?? "Time A",
+        jogadores: porTime(data.team_a_id),
+      },
+      timeB: {
+        id: data.team_b_id,
+        nome: data.team_b?.nome ?? "Time B",
+        jogadores: porTime(data.team_b_id),
+      },
       placarA: data.placar_a,
       placarB: data.placar_b,
       status: data.status,
@@ -321,8 +329,7 @@ export function PartidaScreen({ id }: { id: string }) {
                 <>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm text-foreground">
-                      ⚽{" "}
-                      {e.tipo === "gol" ? e.autorApelido : `Gol contra — ${e.autorApelido}`}
+                      ⚽ {e.tipo === "gol" ? e.autorApelido : `Gol contra — ${e.autorApelido}`}
                     </span>
                     {e.tipo === "gol" && e.assistApelido && (
                       <span className="block truncate text-xs text-muted-foreground">

@@ -2,12 +2,7 @@ import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { FOCUS_RING } from "@/lib/ui";

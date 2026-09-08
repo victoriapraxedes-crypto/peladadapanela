@@ -315,9 +315,7 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
             )}
           </div>
         ) : (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Nenhum gol registrado nesta pelada.
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">Nenhum gol registrado nesta pelada.</p>
         )}
 
         <div className="mt-4 border-t border-border pt-4">

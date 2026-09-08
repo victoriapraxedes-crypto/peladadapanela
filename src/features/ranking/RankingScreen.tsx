@@ -42,8 +42,7 @@ function sortRows(metrica: Metrica, rows: StatsRow[]): StatsRow[] {
     participacoes: (a, b) =>
       desc((r) => n(r.participacoes_em_gols))(a, b) || desc((r) => n(r.gols))(a, b),
     vitorias: (a, b) => desc((r) => n(r.vitorias))(a, b) || desc((r) => n(r.aproveitamento))(a, b),
-    mvps: (a, b) =>
-      desc((r) => n(r.mvps))(a, b) || desc((r) => n(r.participacoes_em_gols))(a, b),
+    mvps: (a, b) => desc((r) => n(r.mvps))(a, b) || desc((r) => n(r.participacoes_em_gols))(a, b),
   };
   return [...rows].sort(cmp[metrica]);
 }
@@ -106,7 +105,11 @@ export function RankingScreen() {
 
       let statsRes;
       if (periodo === "temporada") {
-        const seasonRes = await supabase.from("seasons").select("id").eq("ativa", true).maybeSingle();
+        const seasonRes = await supabase
+          .from("seasons")
+          .select("id")
+          .eq("ativa", true)
+          .maybeSingle();
         if (seasonRes.error || playersRes.error) {
           if (ativo) {
             setErro(true);
@@ -122,7 +125,10 @@ export function RankingScreen() {
           }
           return;
         }
-        statsRes = await supabase.from("player_stats").select("*").eq("season_id", seasonRes.data.id);
+        statsRes = await supabase
+          .from("player_stats")
+          .select("*")
+          .eq("season_id", seasonRes.data.id);
       } else {
         statsRes = await supabase.from("player_stats_alltime").select("*");
       }
@@ -206,63 +212,67 @@ export function RankingScreen() {
       {erro ? (
         <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
       ) : (
-      <div className="rounded-2xl border border-border bg-surface">
-        {loading ? (
-          <div className="flex flex-col gap-4 p-5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex h-10 items-center gap-3">
-                <Skeleton className="h-6 w-6 rounded" />
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="flex flex-1 flex-col gap-2">
-                  <Skeleton className="h-3 w-2/5" />
-                  <Skeleton className="h-3 w-3/5" />
+        <div className="rounded-2xl border border-border bg-surface">
+          {loading ? (
+            <div className="flex flex-col gap-4 p-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex h-10 items-center gap-3">
+                  <Skeleton className="h-6 w-6 rounded" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <Skeleton className="h-3 w-2/5" />
+                    <Skeleton className="h-3 w-3/5" />
+                  </div>
+                  <Skeleton className="h-6 w-8" />
                 </div>
-                <Skeleton className="h-6 w-8" />
-              </div>
-            ))}
-          </div>
-        ) : lista.length === 0 ? (
-          <p className="p-10 text-center text-sm text-muted-foreground">{VAZIO[metrica]}</p>
-        ) : (
-          <ul>
-            {lista.map(({ stats: s, player }, i) => (
-              <li key={s.player_id}>
-                <Link
-                  to="/jogadores/$id"
-                  params={{ id: s.player_id! }}
-                  className={cn(
-                    "grid min-h-[56px] grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-2 transition-colors last:border-b-0 hover:bg-surface-2",
-                    FOCUS_RING,
-                  )}
-                >
-                  <span
+              ))}
+            </div>
+          ) : lista.length === 0 ? (
+            <p className="p-10 text-center text-sm text-muted-foreground">{VAZIO[metrica]}</p>
+          ) : (
+            <ul>
+              {lista.map(({ stats: s, player }, i) => (
+                <li key={s.player_id}>
+                  <Link
+                    to="/jogadores/$id"
+                    params={{ id: s.player_id! }}
                     className={cn(
-                      "num w-6 text-center text-base",
-                      i === 0 ? "text-primary" : "text-muted-foreground",
+                      "grid min-h-[56px] grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-2 transition-colors last:border-b-0 hover:bg-surface-2",
+                      FOCUS_RING,
                     )}
                   >
-                    {i + 1}
-                  </span>
-                  {player.foto_url ? (
-                    <img
-                      src={player.foto_url}
-                      alt={player.apelido}
-                      className="h-10 w-10 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <InitialsAvatar apelido={player.apelido} size={40} />
-                  )}
-                  <div className="min-w-0">
-                    <p className="truncate text-sm text-foreground">{player.apelido}</p>
-                    <p className="truncate text-xs text-muted-foreground">{SUBLINHA[metrica](s)}</p>
-                  </div>
-                  <span className="num shrink-0 text-2xl text-foreground">{VALOR[metrica](s)}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                    <span
+                      className={cn(
+                        "num w-6 text-center text-base",
+                        i === 0 ? "text-primary" : "text-muted-foreground",
+                      )}
+                    >
+                      {i + 1}
+                    </span>
+                    {player.foto_url ? (
+                      <img
+                        src={player.foto_url}
+                        alt={player.apelido}
+                        className="h-10 w-10 shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <InitialsAvatar apelido={player.apelido} size={40} />
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-foreground">{player.apelido}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {SUBLINHA[metrica](s)}
+                      </p>
+                    </div>
+                    <span className="num shrink-0 text-2xl text-foreground">
+                      {VALOR[metrica](s)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );

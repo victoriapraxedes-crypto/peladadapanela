@@ -2,11 +2,7 @@ export type Position = "goleiro" | "defensor" | "meio-campo" | "atacante";
 export type Foot = "direito" | "esquerdo" | "ambidestro";
 export type UserRole = "admin" | "jogador";
 export type PeladaStatus =
-  | "aberta"
-  | "confirmacao"
-  | "times_definidos"
-  | "em_andamento"
-  | "finalizada";
+  "aberta" | "confirmacao" | "times_definidos" | "em_andamento" | "finalizada";
 export type MatchStatus = "agendada" | "em_andamento" | "finalizada";
 export type MatchEventType = "gol" | "assistencia" | "gol_contra";
 
