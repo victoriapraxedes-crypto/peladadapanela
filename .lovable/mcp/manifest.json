@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://fehmypetxxkcxntwygzm.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "pelada-da-panela-app",
+      "version": "0.1.0",
+      "title": "Pelada da Panela App"
+    },
+    "tools": [
+      {
+        "name": "list_peladas",
+        "title": "Listar peladas",
+        "description": "Lista as peladas (data, horário, local e status), da mais recente para a mais antiga.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filtra por status da pelada.",
+              "type": "string",
+              "enum": [
+                "agendada",
+                "em_andamento",
+                "finalizada"
+              ]
+            },
+            "limit": {
+              "default": 10,
+              "description": "Quantidade máxima de peladas.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_pelada",
+        "title": "Detalhes da pelada",
+        "description": "Retorna os dados de uma pelada, a lista de presença confirmada e as partidas com placares.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "pelada_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "ID da pelada."
+            }
+          },
+          "required": [
+            "pelada_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_players",
+        "title": "Listar jogadores",
+        "description": "Lista os jogadores cadastrados na pelada, com posição e pé dominante.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "apenas_ativos": {
+              "default": true,
+              "description": "Retorna somente jogadores ativos.",
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_ranking",
+        "title": "Ranking de jogadores",
+        "description": "Ranking com gols, assistências, jogos, vitórias, MVPs e aproveitamento. Use season_id para uma temporada específica ou omita para o histórico geral.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "season_id": {
+              "description": "Temporada; se omitido, usa o histórico geral.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "ordenar_por": {
+              "default": "gols",
+              "description": "Critério de ordenação.",
+              "type": "string",
+              "enum": [
+                "gols",
+                "assistencias",
+                "mvps",
+                "vitorias",
+                "jogos",
+                "aproveitamento"
+              ]
+            },
+            "limit": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "confirm_presence",
+        "title": "Confirmar ou cancelar presença",
+        "description": "Confirma ou cancela a presença do jogador conectado em uma pelada.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "pelada_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "ID da pelada."
+            },
+            "confirmar": {
+              "default": true,
+              "description": "true confirma a presença; false cancela.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "pelada_id"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
