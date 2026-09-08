@@ -43,6 +43,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
+  const err = error instanceof Error ? error : undefined;
+  const errName = err?.name ?? "Error";
+  const errMsg = err?.message ?? String(error);
+  const errStack = err?.stack ?? "(sem stack)";
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -69,6 +74,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             Voltar ao início
           </a>
         </div>
+        <details className="mt-6">
+          <summary className="flex min-h-[44px] cursor-pointer items-center justify-center text-xs text-muted-foreground">
+            Detalhes técnicos
+          </summary>
+          <pre className="mt-3 max-h-64 overflow-auto rounded-lg border border-border bg-surface-2 p-3 text-left text-[11px] leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">
+            {`${errName}\n${errMsg}\n${errStack}`}
+          </pre>
+        </details>
       </div>
     </div>
   );
