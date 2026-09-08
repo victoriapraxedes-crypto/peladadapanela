@@ -117,7 +117,7 @@ export function PeladaScreen() {
       .delete()
       .eq("pelada_id", peladaId)
       .eq("player_id", c.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error("Não foi possível remover a presença. " + error.message);
     else {
       await fetchConfirmados(peladaId);
       toast.success(`${c.apelido} removido.`);
@@ -131,7 +131,7 @@ export function PeladaScreen() {
     const { error } = await supabase
       .from("pelada_players")
       .insert({ pelada_id: peladaId, player_id: c.id });
-    if (error) toast.error(error.message);
+    if (error) toast.error("Não foi possível confirmar a presença. " + error.message);
     else {
       await fetchConfirmados(peladaId);
       toast.success(`${c.apelido} confirmado.`);
@@ -143,7 +143,8 @@ export function PeladaScreen() {
     let ativo = true;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      setErro(false);
+      const { data, error } = await supabase
         .from("peladas")
         .select("id, data, horario, local, status")
         .gte("data", hojeISO)
@@ -153,6 +154,11 @@ export function PeladaScreen() {
         .maybeSingle();
 
       if (!ativo) return;
+      if (error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
       if (!data) {
         setPelada(null);
         setConfirmados([]);
