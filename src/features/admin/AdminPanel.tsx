@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarCog, ChevronRight, Play, Users, Shuffle } from "lucide-react";
+import { CalendarCog, ChevronRight, Play, Users, Shuffle, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -54,6 +54,12 @@ const ACOES = [
     icon: Play,
     titulo: "Iniciar partida",
     descricao: "Escolher os times e começar.",
+  },
+  {
+    to: "/admin/acessos" as const,
+    icon: UserCheck,
+    titulo: "Solicitações de acesso",
+    descricao: "Aprovar quem pediu para entrar.",
   },
 ];
 
