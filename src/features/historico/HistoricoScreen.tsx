@@ -138,7 +138,11 @@ export function HistoricoScreen() {
         </h1>
       </header>
 
-      {loading ? (
+      {erro ? (
+        <div className="mt-5">
+          <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
+        </div>
+      ) : loading ? (
         <div className="mt-5 grid gap-3">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-[136px] rounded-2xl" />
@@ -158,7 +162,10 @@ export function HistoricoScreen() {
               key={item.id}
               to="/historico/$peladaId"
               params={{ peladaId: item.id }}
-              className="block rounded-2xl border border-border bg-surface p-5"
+              className={cn(
+                "block rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary/40",
+                FOCUS_RING,
+              )}
             >
               <p className="font-display text-base font-semibold text-foreground">
                 {formatDataPorExtenso(item.data)}
