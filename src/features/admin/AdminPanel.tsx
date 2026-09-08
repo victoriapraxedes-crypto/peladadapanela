@@ -1,7 +1,18 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { CalendarCog, ChevronRight, Play, Users, Shuffle } from "lucide-react";
+import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { TopBar } from "@/components/layout/TopBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
@@ -50,6 +61,9 @@ export function AdminPanel() {
   const [pelada, setPelada] = useState<PeladaAtual | null>(null);
   const [confirmados, setConfirmados] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [confirmarEncerrar, setConfirmarEncerrar] = useState(false);
+  const [encerrando, setEncerrando] = useState(false);
+  const [versao, setVersao] = useState(0);
   const hojeISO = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
@@ -84,7 +98,24 @@ export function AdminPanel() {
     return () => {
       ativo = false;
     };
-  }, [hojeISO]);
+  }, [hojeISO, versao]);
+
+  const encerrarPelada = useCallback(async () => {
+    if (!pelada || encerrando) return;
+    setEncerrando(true);
+    const { error } = await supabase
+      .from("peladas")
+      .update({ status: "finalizada" })
+      .eq("id", pelada.id);
+    setEncerrando(false);
+    setConfirmarEncerrar(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Pelada encerrada.");
+    setVersao((v) => v + 1);
+  }, [pelada, encerrando]);
 
   return (
     <>
@@ -119,6 +150,15 @@ export function AdminPanel() {
               <span className="text-sm text-muted-foreground">confirmados</span>
               <StatusBadge status={pelada.status} />
             </div>
+            {pelada.status === "em_andamento" && (
+              <button
+                type="button"
+                onClick={() => setConfirmarEncerrar(true)}
+                className="mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-border text-sm font-medium text-foreground"
+              >
+                Encerrar pelada
+              </button>
+            )}
           </>
         ) : (
           <>
@@ -151,6 +191,23 @@ export function AdminPanel() {
           </Link>
         ))}
       </nav>
+
+      <AlertDialog open={confirmarEncerrar} onOpenChange={setConfirmarEncerrar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Encerrar a pelada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A pelada vai para o histórico. As partidas já encerradas continuam registradas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={encerrando} onClick={() => void encerrarPelada()}>
+              Encerrar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
