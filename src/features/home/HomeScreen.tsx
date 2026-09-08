@@ -210,7 +210,7 @@ function NextPeladaCard() {
     return () => {
       ativo = false;
     };
-  }, [hojeISO, fetchConfirmados]);
+  }, [hojeISO, fetchConfirmados, tentativa]);
 
   useEffect(() => {
     if (!pelada) return;
@@ -248,6 +248,10 @@ function NextPeladaCard() {
         <Skeleton className="mt-5 h-[52px] w-full rounded-xl" />
       </CardFrame>
     );
+  }
+
+  if (erro) {
+    return <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />;
   }
 
   if (!pelada) {
