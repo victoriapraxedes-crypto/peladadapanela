@@ -547,6 +547,7 @@ export function HomeScreen() {
     <>
       <TopBar />
       <div className="grid gap-6">
+        <h1 className="sr-only">Início — próxima pelada, destaques e ranking da turma</h1>
         <NextPeladaCard />
         {erro ? (
           <ErroCarregamento onRetry={recarregar} />
