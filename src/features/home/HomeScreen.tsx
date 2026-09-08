@@ -78,7 +78,7 @@ function NextPeladaCard() {
 
 function Destaques() {
   const artilheiro = [...playerStats].sort((a, b) => b.gols - a.gols)[0];
-  const artPlayer = getPlayer(artilheiro.playerId);
+  const artPlayer = artilheiro ? getPlayer(artilheiro.playerId) : undefined;
   const mvpPlayer = getPlayer(recentMvp.playerId);
 
   return (
@@ -94,7 +94,7 @@ function Destaques() {
           </span>
         </div>
         <p className="mt-3">
-          <span className="num text-2xl text-foreground">{artilheiro.gols}</span>{" "}
+          <span className="num text-2xl text-foreground">{artilheiro?.gols ?? 0}</span>{" "}
           <span className="text-xs text-muted-foreground">gols</span>
         </p>
       </div>
