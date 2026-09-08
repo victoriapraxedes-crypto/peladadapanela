@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PeladaRouteImport } from './routes/pelada'
@@ -20,6 +19,8 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminJogadoresRouteImport } from './routes/admin.jogadores'
 import { Route as AdminPeladaRouteImport } from './routes/admin.pelada'
 import { Route as AdminTimesRouteImport } from './routes/admin.times'
+import { Route as HistoricoIndexRouteImport } from './routes/historico.index'
+import { Route as HistoricoPeladaIdRouteImport } from './routes/historico.$peladaId'
 import { Route as JogadoresIndexRouteImport } from './routes/jogadores.index'
 import { Route as JogadoresIdRouteImport } from './routes/jogadores.$id'
 import { Route as PartidaIdRouteImport } from './routes/partida.$id'
@@ -27,11 +28,6 @@ import { Route as PartidaIdRouteImport } from './routes/partida.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoricoRoute = HistoricoRouteImport.update({
-  id: '/historico',
-  path: '/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -79,6 +75,16 @@ const AdminTimesRoute = AdminTimesRouteImport.update({
   path: '/admin/times',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HistoricoIndexRoute = HistoricoIndexRouteImport.update({
+  id: '/historico/',
+  path: '/historico/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoricoPeladaIdRoute = HistoricoPeladaIdRouteImport.update({
+  id: '/historico/$peladaId',
+  path: '/historico/$peladaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JogadoresIndexRoute = JogadoresIndexRouteImport.update({
   id: '/jogadores/',
   path: '/jogadores/',
@@ -97,7 +103,6 @@ const PartidaIdRoute = PartidaIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
@@ -106,14 +111,15 @@ export interface FileRoutesByFullPath {
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/times': typeof AdminTimesRoute
+  '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
   '/partida/$id': typeof PartidaIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/historico/': typeof HistoricoIndexRoute
   '/jogadores/': typeof JogadoresIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
@@ -122,15 +128,16 @@ export interface FileRoutesByTo {
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/times': typeof AdminTimesRoute
+  '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
   '/partida/$id': typeof PartidaIdRoute
   '/admin': typeof AdminIndexRoute
+  '/historico': typeof HistoricoIndexRoute
   '/jogadores': typeof JogadoresIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/pelada': typeof PeladaRoute
@@ -139,16 +146,17 @@ export interface FileRoutesById {
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/times': typeof AdminTimesRoute
+  '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
   '/partida/$id': typeof PartidaIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/historico/': typeof HistoricoIndexRoute
   '/jogadores/': typeof JogadoresIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/historico'
     | '/login'
     | '/onboarding'
     | '/pelada'
@@ -157,14 +165,15 @@ export interface FileRouteTypes {
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/times'
+    | '/historico/$peladaId'
     | '/jogadores/$id'
     | '/partida/$id'
     | '/admin/'
+    | '/historico/'
     | '/jogadores/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/historico'
     | '/login'
     | '/onboarding'
     | '/pelada'
@@ -173,14 +182,15 @@ export interface FileRouteTypes {
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/times'
+    | '/historico/$peladaId'
     | '/jogadores/$id'
     | '/partida/$id'
     | '/admin'
+    | '/historico'
     | '/jogadores'
   id:
     | '__root__'
     | '/'
-    | '/historico'
     | '/login'
     | '/onboarding'
     | '/pelada'
@@ -189,15 +199,16 @@ export interface FileRouteTypes {
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/times'
+    | '/historico/$peladaId'
     | '/jogadores/$id'
     | '/partida/$id'
     | '/admin/'
+    | '/historico/'
     | '/jogadores/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  HistoricoRoute: typeof HistoricoRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PeladaRoute: typeof PeladaRoute
@@ -206,9 +217,11 @@ export interface RootRouteChildren {
   AdminJogadoresRoute: typeof AdminJogadoresRoute
   AdminPeladaRoute: typeof AdminPeladaRoute
   AdminTimesRoute: typeof AdminTimesRoute
+  HistoricoPeladaIdRoute: typeof HistoricoPeladaIdRoute
   JogadoresIdRoute: typeof JogadoresIdRoute
   PartidaIdRoute: typeof PartidaIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  HistoricoIndexRoute: typeof HistoricoIndexRoute
   JogadoresIndexRoute: typeof JogadoresIndexRoute
 }
 
@@ -219,13 +232,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/historico': {
-      id: '/historico'
-      path: '/historico'
-      fullPath: '/historico'
-      preLoaderRoute: typeof HistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -291,6 +297,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTimesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/historico/': {
+      id: '/historico/'
+      path: '/historico'
+      fullPath: '/historico/'
+      preLoaderRoute: typeof HistoricoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historico/$peladaId': {
+      id: '/historico/$peladaId'
+      path: '/historico/$peladaId'
+      fullPath: '/historico/$peladaId'
+      preLoaderRoute: typeof HistoricoPeladaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jogadores/': {
       id: '/jogadores/'
       path: '/jogadores'
@@ -317,7 +337,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  HistoricoRoute: HistoricoRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PeladaRoute: PeladaRoute,
@@ -326,9 +345,11 @@ const rootRouteChildren: RootRouteChildren = {
   AdminJogadoresRoute: AdminJogadoresRoute,
   AdminPeladaRoute: AdminPeladaRoute,
   AdminTimesRoute: AdminTimesRoute,
+  HistoricoPeladaIdRoute: HistoricoPeladaIdRoute,
   JogadoresIdRoute: JogadoresIdRoute,
   PartidaIdRoute: PartidaIdRoute,
   AdminIndexRoute: AdminIndexRoute,
+  HistoricoIndexRoute: HistoricoIndexRoute,
   JogadoresIndexRoute: JogadoresIndexRoute,
 }
 export const routeTree = rootRouteImport
