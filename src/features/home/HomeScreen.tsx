@@ -158,12 +158,12 @@ function AcessoRapido() {
     "grid min-h-[56px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 text-sm font-medium text-foreground hover:border-primary/40";
   return (
     <section className="grid gap-3">
-      <Link to="/perfil" className={itemClass}>
+      <Link to="/jogadores" className={itemClass}>
         <Users size={18} className="text-muted-foreground" />
         <span className="truncate text-left">Jogadores</span>
         <ChevronRight size={18} className="text-muted-foreground" />
       </Link>
-      <Link to="/pelada" className={itemClass}>
+      <Link to="/historico" className={itemClass}>
         <History size={18} className="text-muted-foreground" />
         <span className="truncate text-left">Histórico</span>
         <ChevronRight size={18} className="text-muted-foreground" />
