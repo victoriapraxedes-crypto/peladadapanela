@@ -5,7 +5,10 @@ import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
+import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { FOCUS_RING } from "@/lib/ui";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
 import { MvpCard } from "@/features/pelada/MvpCard";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -67,6 +70,8 @@ export function PeladaScreen() {
   const [times, setTimes] = useState<TimeComJogadores[]>([]);
   const [partidas, setPartidas] = useState<PartidaResumo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
   const [presencaBusyId, setPresencaBusyId] = useState<string | null>(null);
 
   const hojeISO = new Date().toISOString().slice(0, 10);
