@@ -231,7 +231,7 @@ export function PartidaScreen({ id }: { id: string }) {
     setOcupado(false);
     setDesfazerAberto(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível desfazer o evento. " + error.message);
       return;
     }
     toast.success("Último evento desfeito.");
@@ -247,7 +247,7 @@ export function PartidaScreen({ id }: { id: string }) {
     setOcupado(false);
     setEncerrarAberto(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível encerrar a partida. " + error.message);
       return;
     }
     toast.success("Partida encerrada.");
@@ -263,16 +263,16 @@ export function PartidaScreen({ id }: { id: string }) {
       </p>
 
       <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-          <h2 className="truncate text-center font-display text-base font-semibold text-foreground">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+          <h2 className="truncate text-center font-display text-sm font-semibold text-foreground sm:text-base">
             {partida.timeA.nome}
           </h2>
-          <p className="num text-6xl leading-none text-foreground">
+          <p className="num shrink-0 whitespace-nowrap text-4xl leading-none text-foreground sm:text-6xl">
             {partida.placarA}
-            <span className="mx-2 text-muted-foreground">–</span>
+            <span className="mx-1 text-muted-foreground sm:mx-2">–</span>
             {partida.placarB}
           </p>
-          <h2 className="truncate text-center font-display text-base font-semibold text-foreground">
+          <h2 className="truncate text-center font-display text-sm font-semibold text-foreground sm:text-base">
             {partida.timeB.nome}
           </h2>
         </div>
