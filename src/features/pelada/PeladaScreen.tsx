@@ -392,13 +392,18 @@ export function PeladaScreen() {
                     <InitialsAvatar apelido={c.apelido} size={36} />
                   )}
                   <span className="truncate text-sm text-foreground">{c.apelido}</span>
-                  <span className="text-xs text-muted-foreground">{POSICAO_LABEL[c.posicao]}</span>
+                  <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                    {POSICAO_LABEL[c.posicao]}
+                  </span>
                   <button
                     type="button"
                     aria-label={"Adicionar " + c.apelido}
                     disabled={presencaBusyId === c.id}
                     onClick={() => void adicionarPresenca(pelada.id, c)}
-                    className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-primary disabled:opacity-50"
+                    className={cn(
+                      "flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-primary disabled:opacity-50",
+                      FOCUS_RING,
+                    )}
                   >
                     <Plus size={16} />
                   </button>
