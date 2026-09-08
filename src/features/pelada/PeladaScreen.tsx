@@ -447,7 +447,10 @@ export function PeladaScreen() {
                 <Link
                   to="/partida/$id"
                   params={{ id: p.id }}
-                  className="grid min-h-[44px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
+                  className={cn(
+                    "grid min-h-[44px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4 transition-colors hover:text-primary",
+                    FOCUS_RING,
+                  )}
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm text-foreground">
@@ -457,7 +460,7 @@ export function PeladaScreen() {
                       <StatusBadge status={p.status} />
                     </span>
                   </span>
-                  <span className="num text-xl text-foreground">
+                  <span className="num shrink-0 whitespace-nowrap text-xl text-foreground">
                     {p.placarA} – {p.placarB}
                   </span>
                 </Link>
@@ -468,18 +471,24 @@ export function PeladaScreen() {
       </section>
 
       {isAdmin && (
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-3">
           <Link
             to="/admin/times"
-            className="flex h-[52px] items-center justify-center rounded-xl border border-border bg-surface-2 text-sm font-medium text-foreground"
+            className={cn(
+              "flex h-[52px] min-w-0 items-center justify-center rounded-xl border border-border bg-surface-2 px-2 text-center text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+              FOCUS_RING,
+            )}
           >
-            Montar times
+            <span className="truncate">Montar times</span>
           </Link>
           <Link
             to="/admin"
-            className="flex h-[52px] items-center justify-center rounded-xl border border-border bg-surface-2 text-sm font-medium text-foreground"
+            className={cn(
+              "flex h-[52px] min-w-0 items-center justify-center rounded-xl border border-border bg-surface-2 px-2 text-center text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+              FOCUS_RING,
+            )}
           >
-            Painel
+            <span className="truncate">Painel</span>
           </Link>
         </div>
       )}
