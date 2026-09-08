@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { InitialsAvatar } from "@/components/layout/Avatar";
+import { TopBar } from "@/components/layout/TopBar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type StatsRow = Tables<"player_stats">;
