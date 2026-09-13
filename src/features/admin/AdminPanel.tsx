@@ -65,9 +65,10 @@ const ACOES = [
 
 export function AdminPanel() {
   const [pelada, setPelada] = useState<PeladaAtual | null>(null);
+  const [emAberto, setEmAberto] = useState<PeladaAtual[]>([]);
   const [confirmados, setConfirmados] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [confirmarEncerrar, setConfirmarEncerrar] = useState(false);
+  const [alvoEncerrar, setAlvoEncerrar] = useState<PeladaAtual | null>(null);
   const [encerrando, setEncerrando] = useState(false);
   const [versao, setVersao] = useState(0);
   const [pendentes, setPendentes] = useState(0);
@@ -91,27 +92,30 @@ export function AdminPanel() {
     let ativo = true;
     (async () => {
       setLoading(true);
+      // Todas as peladas ainda não finalizadas, inclusive as de datas passadas:
+      // nenhuma pelada pode sumir só porque o admin não encerrou o fluxo.
       const { data } = await supabase
         .from("peladas")
         .select("id, data, horario, local, status")
-        .gte("data", hojeISO)
         .neq("status", "finalizada")
-        .order("data", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order("data", { ascending: true });
 
       if (!ativo) return;
-      if (!data) {
+      const lista = data ?? [];
+      setEmAberto([...lista].sort((a, b) => b.data.localeCompare(a.data)));
+
+      const atual = lista.find((p) => p.data >= hojeISO) ?? [...lista].reverse()[0] ?? null;
+      if (!atual) {
         setPelada(null);
         setConfirmados(0);
         setLoading(false);
         return;
       }
-      setPelada(data);
+      setPelada(atual);
       const { count } = await supabase
         .from("pelada_players")
         .select("player_id", { count: "exact", head: true })
-        .eq("pelada_id", data.id);
+        .eq("pelada_id", atual.id);
       if (!ativo) return;
       setConfirmados(count ?? 0);
       setLoading(false);
@@ -121,22 +125,23 @@ export function AdminPanel() {
     };
   }, [hojeISO, versao]);
 
+
   const encerrarPelada = useCallback(async () => {
-    if (!pelada || encerrando) return;
+    if (!alvoEncerrar || encerrando) return;
     setEncerrando(true);
     const { error } = await supabase
       .from("peladas")
       .update({ status: "finalizada" })
-      .eq("id", pelada.id);
+      .eq("id", alvoEncerrar.id);
     setEncerrando(false);
-    setConfirmarEncerrar(false);
+    setAlvoEncerrar(null);
     if (error) {
       toast.error("Não foi possível encerrar a pelada. " + error.message);
       return;
     }
     toast.success("Pelada encerrada.");
     setVersao((v) => v + 1);
-  }, [pelada, encerrando]);
+  }, [alvoEncerrar, encerrando]);
 
   return (
     <>
@@ -151,8 +156,9 @@ export function AdminPanel() {
 
       <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
         <p className="font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary">
-          Próxima pelada
+          {pelada && pelada.data < hojeISO ? "Pelada em aberto" : "Próxima pelada"}
         </p>
+
 
         {loading ? (
           <>
@@ -173,15 +179,28 @@ export function AdminPanel() {
               <span className="text-sm text-muted-foreground">confirmados</span>
               <StatusBadge status={pelada.status} />
             </div>
-            {pelada.status === "em_andamento" && (
+            <div className="mt-5 grid gap-3">
+              <Link
+                to="/pelada"
+                className="flex h-[52px] w-full items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim"
+              >
+                Retomar pelada
+              </Link>
+              <Link
+                to="/historico/$peladaId"
+                params={{ peladaId: pelada.id }}
+                className="flex h-[52px] w-full items-center justify-center rounded-xl border border-border text-sm font-medium text-foreground"
+              >
+                Ver súmula
+              </Link>
               <button
                 type="button"
-                onClick={() => setConfirmarEncerrar(true)}
-                className="mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-border text-sm font-medium text-foreground"
+                onClick={() => setAlvoEncerrar(pelada)}
+                className="flex h-[52px] w-full items-center justify-center rounded-xl border border-border text-sm font-medium text-foreground"
               >
                 Encerrar pelada
               </button>
-            )}
+            </div>
           </>
         ) : (
           <>
@@ -197,6 +216,50 @@ export function AdminPanel() {
           </>
         )}
       </section>
+
+      {emAberto.length > 1 && (
+        <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
+          <p className="font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary">
+            Peladas em aberto
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Nenhuma pelada some do app: ela fica aqui até você encerrar.
+          </p>
+          <ul className="mt-3 grid gap-3">
+            {emAberto.map((p) => (
+              <li key={p.id} className="rounded-xl border border-border bg-surface-2 p-4">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {formatDataPorExtenso(p.data)}
+                </p>
+                <p className="mt-1 truncate text-xs text-muted-foreground">
+                  {p.horario} · {p.local}
+                </p>
+                <div className="mt-2">
+                  <StatusBadge status={p.status} />
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Link
+                    to="/historico/$peladaId"
+                    params={{ peladaId: p.id }}
+                    className="flex h-[44px] items-center justify-center rounded-lg border border-border text-xs font-medium text-foreground"
+                  >
+                    Ver súmula
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setAlvoEncerrar(p)}
+                    className="flex h-[44px] items-center justify-center rounded-lg border border-border text-xs font-medium text-foreground"
+                  >
+                    Encerrar
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+
 
       <nav className="mt-5 grid gap-3">
         {ACOES.map((acao) => (
@@ -224,7 +287,12 @@ export function AdminPanel() {
         ))}
       </nav>
 
-      <AlertDialog open={confirmarEncerrar} onOpenChange={setConfirmarEncerrar}>
+      <AlertDialog
+        open={alvoEncerrar !== null}
+        onOpenChange={(aberto) => {
+          if (!aberto) setAlvoEncerrar(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Encerrar a pelada?</AlertDialogTitle>

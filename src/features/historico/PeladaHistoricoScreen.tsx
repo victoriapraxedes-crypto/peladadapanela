@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { POSICAO_LABEL } from "@/features/jogadores/labels";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDataPorExtenso } from "@/lib/format";
@@ -53,6 +54,8 @@ function nomes(lista: string[]) {
 }
 
 export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === "admin";
   const [loading, setLoading] = useState(true);
   const [pelada, setPelada] = useState<PeladaRow | null>(null);
   const [presentes, setPresentes] = useState<Presente[]>([]);

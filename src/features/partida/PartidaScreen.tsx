@@ -62,7 +62,9 @@ export function PartidaScreen({ id }: { id: string }) {
   const [eventoEditando, setEventoEditando] = useState<EventoPartida | null>(null);
   const [desfazerAberto, setDesfazerAberto] = useState(false);
   const [encerrarAberto, setEncerrarAberto] = useState(false);
+  const [modoSumula, setModoSumula] = useState(false);
   const [ocupado, setOcupado] = useState(false);
+
 
   const carregar = useCallback(async () => {
     setErro(false);
@@ -226,7 +228,8 @@ export function PartidaScreen({ id }: { id: string }) {
   }
 
   const finalizada = partida.status === "finalizada";
-  const podeOperar = isAdmin && !finalizada;
+  const podeOperar = isAdmin && (!finalizada || modoSumula);
+
   const times: [TimeInfo, TimeInfo] = [partida.timeA, partida.timeB];
   const nomeTime = (teamId: string) =>
     teamId === partida.timeA.id ? partida.timeA.nome : partida.timeB.nome;
@@ -291,6 +294,24 @@ export function PartidaScreen({ id }: { id: string }) {
           </p>
         )}
       </section>
+
+      {isAdmin && finalizada && (
+        <section className="mt-5 rounded-2xl border border-primary/40 bg-surface p-5">
+          <p className={SECTION_LABEL}>Súmula da partida</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Esta partida já foi encerrada. O que você registrar aqui atualiza o placar e as
+            estatísticas dos jogadores.
+          </p>
+          <button
+            type="button"
+            onClick={() => setModoSumula((v) => !v)}
+            className={`${BTN_SECONDARY} mt-4`}
+          >
+            {modoSumula ? "Sair do modo súmula" : "Preencher súmula"}
+          </button>
+        </section>
+      )}
+
 
       {podeOperar && (
         <div className="mt-5 flex flex-col gap-3">
@@ -370,7 +391,7 @@ export function PartidaScreen({ id }: { id: string }) {
         )}
       </section>
 
-      {podeOperar && (
+      {isAdmin && !finalizada && (
         <button
           type="button"
           onClick={() => setEncerrarAberto(true)}
