@@ -153,14 +153,11 @@ export function PeladaScreen() {
     (async () => {
       setLoading(true);
       setErro(false);
-      const { data, error } = await supabase
+      const { data: abertas, error } = await supabase
         .from("peladas")
         .select("id, data, horario, local, status")
-        .gte("data", hojeISO)
         .neq("status", "finalizada")
-        .order("data", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order("data", { ascending: true });
 
       if (!ativo) return;
       if (error) {
@@ -168,6 +165,9 @@ export function PeladaScreen() {
         setLoading(false);
         return;
       }
+      const lista = abertas ?? [];
+      // Próxima pelada; se não houver, a mais recente ainda em aberto (não some do app).
+      const data = lista.find((p) => p.data >= hojeISO) ?? [...lista].reverse()[0] ?? null;
       if (!data) {
         setPelada(null);
         setConfirmados([]);
@@ -178,6 +178,7 @@ export function PeladaScreen() {
         return;
       }
       setPelada(data);
+
 
       const [{ data: teamRows }, { data: matchRows }] = await Promise.all([
         supabase
@@ -317,7 +318,14 @@ export function PeladaScreen() {
         <p className="mt-3">
           <StatusBadge status={pelada.status} />
         </p>
+        {pelada.data < hojeISO && (
+          <p className="mt-3 rounded-xl border border-primary/40 bg-surface p-3 text-xs text-muted-foreground">
+            Esta pelada já aconteceu e continua em aberto. Ela só vai para o histórico quando um
+            admin encerrar.
+          </p>
+        )}
       </header>
+
 
       <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
         <div className="flex items-baseline justify-between gap-3">
