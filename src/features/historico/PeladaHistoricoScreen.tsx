@@ -409,6 +409,24 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
                     </span>
                   </div>
 
+                  {isAdmin && (
+                    <div className="mt-4 rounded-xl border border-primary/40 bg-surface-2 p-3">
+                      <p className="text-xs text-muted-foreground">
+                        Esta partida já foi encerrada. As alterações feitas aqui atualizam o placar
+                        e as estatísticas dos jogadores.
+                      </p>
+                      <Link
+                        to="/partida/$id"
+                        params={{ id: m.id }}
+                        className="mt-3 flex h-[44px] items-center justify-center rounded-lg border border-border text-xs font-medium text-foreground"
+                      >
+                        Editar súmula
+                      </Link>
+                    </div>
+                  )}
+
+
+
                   {doJogo.length === 0 ? (
                     <p className="mt-4 text-sm text-muted-foreground">Sem gols.</p>
                   ) : (
