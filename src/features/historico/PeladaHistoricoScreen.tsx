@@ -6,8 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
-import { useAuth } from "@/features/auth/AuthProvider";
-import { POSICAO_LABEL } from "@/features/jogadores/labels";
+import { posicaoLabel } from "@/features/jogadores/labels";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDataPorExtenso } from "@/lib/format";
 import type { Database, Tables } from "@/integrations/supabase/types";
@@ -19,7 +18,7 @@ interface Presente {
   id: string;
   apelido: string;
   fotoUrl: string | null;
-  posicao: Posicao;
+  posicao: Posicao | null;
 }
 
 interface TimeInfo {
@@ -54,8 +53,6 @@ function nomes(lista: string[]) {
 }
 
 export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
-  const { profile } = useAuth();
-  const isAdmin = profile?.role === "admin";
   const [loading, setLoading] = useState(true);
   const [pelada, setPelada] = useState<PeladaRow | null>(null);
   const [presentes, setPresentes] = useState<Presente[]>([]);
@@ -356,7 +353,7 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
                 <InitialsAvatar apelido={p.apelido} size={36} />
               )}
               <span className="truncate text-sm text-foreground">{p.apelido}</span>
-              <span className="text-xs text-muted-foreground">{POSICAO_LABEL[p.posicao]}</span>
+              <span className="text-xs text-muted-foreground">{posicaoLabel(p.posicao)}</span>
             </li>
           ))}
         </ul>
@@ -408,24 +405,6 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
                       {m.placar_a} - {m.placar_b}
                     </span>
                   </div>
-
-                  {isAdmin && (
-                    <div className="mt-4 rounded-xl border border-primary/40 bg-surface-2 p-3">
-                      <p className="text-xs text-muted-foreground">
-                        Esta partida já foi encerrada. As alterações feitas aqui atualizam o placar
-                        e as estatísticas dos jogadores.
-                      </p>
-                      <Link
-                        to="/partida/$id"
-                        params={{ id: m.id }}
-                        className="mt-3 flex h-[44px] items-center justify-center rounded-lg border border-border text-xs font-medium text-foreground"
-                      >
-                        Editar súmula
-                      </Link>
-                    </div>
-                  )}
-
-
 
                   {doJogo.length === 0 ? (
                     <p className="mt-4 text-sm text-muted-foreground">Sem gols.</p>

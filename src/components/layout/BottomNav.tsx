@@ -12,7 +12,7 @@ export function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface/95 backdrop-blur">
       <div
-        className="mx-auto flex w-full max-w-md items-stretch justify-between px-2"
+        className="mx-auto flex w-full max-w-md items-stretch justify-between px-2 md:max-w-2xl lg:max-w-4xl"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {items.map(({ to, label, icon: Icon }) => (

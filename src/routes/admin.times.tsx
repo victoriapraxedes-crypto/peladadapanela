@@ -8,13 +8,13 @@ export const Route = createFileRoute("/admin/times")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Montar times — Pelada da Panela" },
+      { title: "Sortear times — Pelada da Panela" },
       {
         name: "description",
-        content: "Distribuir os confirmados nos times e começar as partidas.",
+        content: "Sortear os escalados em times para organizar a pelada.",
       },
-      { property: "og:title", content: "Montar times — Pelada da Panela" },
-      { property: "og:description", content: "Distribuir os confirmados nos times." },
+      { property: "og:title", content: "Sortear times — Pelada da Panela" },
+      { property: "og:description", content: "Sortear os escalados em times." },
     ],
   }),
   component: () => (

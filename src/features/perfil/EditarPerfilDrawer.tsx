@@ -57,7 +57,7 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
   const [nome, setNome] = useState(player.nome);
   const [apelido, setApelido] = useState(player.apelido);
   const [fotoUrl, setFotoUrl] = useState<string | null>(player.foto_url);
-  const [posicao, setPosicao] = useState<Posicao>(player.posicao_principal);
+  const [posicao, setPosicao] = useState<Posicao | null>(player.posicao_principal);
   const [secundarias, setSecundarias] = useState<Posicao[]>(
     (player.posicoes_secundarias ?? []) as Posicao[],
   );

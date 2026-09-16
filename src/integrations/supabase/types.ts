@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      auditoria_resultados: {
+        Row: {
+          acao: string
+          antes: Json | null
+          depois: Json | null
+          entidade: string
+          feito_em: string
+          feito_por: string | null
+          id: number
+          justificativa: string | null
+          pelada_id: string | null
+          player_id: string | null
+        }
+        Insert: {
+          acao: string
+          antes?: Json | null
+          depois?: Json | null
+          entidade: string
+          feito_em?: string
+          feito_por?: string | null
+          id?: never
+          justificativa?: string | null
+          pelada_id?: string | null
+          player_id?: string | null
+        }
+        Update: {
+          acao?: string
+          antes?: Json | null
+          depois?: Json | null
+          entidade?: string
+          feito_em?: string
+          feito_por?: string | null
+          id?: never
+          justificativa?: string | null
+          pelada_id?: string | null
+          player_id?: string | null
+        }
+        Relationships: []
+      }
       match_events: {
         Row: {
           assist_player_id: string | null
@@ -256,6 +295,69 @@ export type Database = {
           },
         ]
       }
+      ocorrencias_disciplinares: {
+        Row: {
+          anulada: boolean
+          anulada_em: string | null
+          anulada_por: string | null
+          data_ocorrencia: string
+          descricao: string | null
+          id: string
+          justificativa_anulacao: string | null
+          pelada_id: string
+          player_id: string
+          registrado_em: string
+          registrado_por: string | null
+          suspenso_ate: string
+          tipo: string
+        }
+        Insert: {
+          anulada?: boolean
+          anulada_em?: string | null
+          anulada_por?: string | null
+          data_ocorrencia: string
+          descricao?: string | null
+          id?: string
+          justificativa_anulacao?: string | null
+          pelada_id: string
+          player_id: string
+          registrado_em?: string
+          registrado_por?: string | null
+          suspenso_ate: string
+          tipo?: string
+        }
+        Update: {
+          anulada?: boolean
+          anulada_em?: string | null
+          anulada_por?: string | null
+          data_ocorrencia?: string
+          descricao?: string | null
+          id?: string
+          justificativa_anulacao?: string | null
+          pelada_id?: string
+          player_id?: string
+          registrado_em?: string
+          registrado_por?: string | null
+          suspenso_ate?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_disciplinares_pelada_id_player_id_fkey"
+            columns: ["pelada_id", "player_id"]
+            isOneToOne: false
+            referencedRelation: "pelada_players"
+            referencedColumns: ["pelada_id", "player_id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_disciplinares_pelada_id_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pelada_players: {
         Row: {
           confirmado_em: string
@@ -303,6 +405,51 @@ export type Database = {
           },
         ]
       }
+      pelada_stats: {
+        Row: {
+          assistencias: number
+          atualizado_em: string
+          atualizado_por: string | null
+          carrinhos: number
+          gols: number
+          pelada_id: string
+          player_id: string
+        }
+        Insert: {
+          assistencias?: number
+          atualizado_em?: string
+          atualizado_por?: string | null
+          carrinhos?: number
+          gols?: number
+          pelada_id: string
+          player_id: string
+        }
+        Update: {
+          assistencias?: number
+          atualizado_em?: string
+          atualizado_por?: string | null
+          carrinhos?: number
+          gols?: number
+          pelada_id?: string
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pelada_stats_pelada_id_player_id_fkey"
+            columns: ["pelada_id", "player_id"]
+            isOneToOne: false
+            referencedRelation: "pelada_players"
+            referencedColumns: ["pelada_id", "player_id"]
+          },
+          {
+            foreignKeyName: "pelada_stats_pelada_id_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       peladas: {
         Row: {
           criado_em: string
@@ -310,6 +457,9 @@ export type Database = {
           horario: string
           id: string
           local: string
+          publicado_em: string | null
+          publicado_por: string | null
+          resultado: Database["public"]["Enums"]["resultado_status"]
           season_id: string
           status: Database["public"]["Enums"]["pelada_status"]
         }
@@ -319,6 +469,9 @@ export type Database = {
           horario?: string
           id?: string
           local: string
+          publicado_em?: string | null
+          publicado_por?: string | null
+          resultado?: Database["public"]["Enums"]["resultado_status"]
           season_id: string
           status?: Database["public"]["Enums"]["pelada_status"]
         }
@@ -328,6 +481,9 @@ export type Database = {
           horario?: string
           id?: string
           local?: string
+          publicado_em?: string | null
+          publicado_por?: string | null
+          resultado?: Database["public"]["Enums"]["resultado_status"]
           season_id?: string
           status?: Database["public"]["Enums"]["pelada_status"]
         }
@@ -358,7 +514,7 @@ export type Database = {
           nome: string
           numero_preferido: number | null
           pe_dominante: Database["public"]["Enums"]["pe_dominante"]
-          posicao_principal: Database["public"]["Enums"]["posicao"]
+          posicao_principal: Database["public"]["Enums"]["posicao"] | null
           posicoes_secundarias: Database["public"]["Enums"]["posicao"][]
           profile_id: string | null
         }
@@ -371,7 +527,7 @@ export type Database = {
           nome: string
           numero_preferido?: number | null
           pe_dominante?: Database["public"]["Enums"]["pe_dominante"]
-          posicao_principal: Database["public"]["Enums"]["posicao"]
+          posicao_principal?: Database["public"]["Enums"]["posicao"] | null
           posicoes_secundarias?: Database["public"]["Enums"]["posicao"][]
           profile_id?: string | null
         }
@@ -384,7 +540,7 @@ export type Database = {
           nome?: string
           numero_preferido?: number | null
           pe_dominante?: Database["public"]["Enums"]["pe_dominante"]
-          posicao_principal?: Database["public"]["Enums"]["posicao"]
+          posicao_principal?: Database["public"]["Enums"]["posicao"] | null
           posicoes_secundarias?: Database["public"]["Enums"]["posicao"][]
           profile_id?: string | null
         }
@@ -530,6 +686,34 @@ export type Database = {
       }
     }
     Views: {
+      desempenho_pelada: {
+        Row: {
+          assistencias: number | null
+          carrinhos: number | null
+          data: string | null
+          gols: number | null
+          pelada_id: string | null
+          player_id: string | null
+          pontos: number | null
+          season_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pelada_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pelada_players_pelada_id_fkey"
+            columns: ["pelada_id"]
+            isOneToOne: false
+            referencedRelation: "peladas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_participations: {
         Row: {
           gols_pro: number | null
@@ -668,9 +852,55 @@ export type Database = {
       }
     }
     Functions: {
+      abrir_temporada: {
+        Args: { p_inicio?: string; p_nome: string }
+        Returns: string
+      }
+      anular_ocorrencia: {
+        Args: {
+          p_justificativa: string
+          p_ocorrencia_id: string
+          p_remover_carrinho?: boolean
+        }
+        Returns: undefined
+      }
       current_player_id: { Args: never; Returns: string }
+      encerrar_temporada: {
+        Args: { p_fim?: string; p_season_id: string }
+        Returns: undefined
+      }
+      hoje_local: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_aprovado: { Args: never; Returns: boolean }
+      publicar_resultado: { Args: { p_pelada_id: string }; Returns: undefined }
+      ranking: {
+        Args: { p_antes_de?: string; p_season_id?: string }
+        Returns: {
+          assistencias: number
+          carrinhos: number
+          gols: number
+          jogos: number
+          player_id: string
+          pontos: number
+          posicao: number
+        }[]
+      }
+      registrar_carrinho_lesao: {
+        Args: { p_descricao?: string; p_pelada_id: string; p_player_id: string }
+        Returns: string
+      }
+      salvar_sumula: {
+        Args: { p_justificativa?: string; p_linhas: Json; p_pelada_id: string }
+        Returns: undefined
+      }
+      suspensao_na_data: {
+        Args: { p_data: string; p_player_id: string }
+        Returns: string
+      }
+      vincular_convidado: {
+        Args: { p_convidado_id: string; p_profile_id: string }
+        Returns: string
+      }
     }
     Enums: {
       acesso_status: "pendente" | "aprovado" | "recusado"
@@ -684,6 +914,7 @@ export type Database = {
         | "em_andamento"
         | "finalizada"
       posicao: "goleiro" | "defensor" | "meio-campo" | "atacante"
+      resultado_status: "rascunho" | "publicado"
       user_role: "admin" | "jogador"
     }
     CompositeTypes: {
@@ -824,6 +1055,7 @@ export const Constants = {
         "finalizada",
       ],
       posicao: ["goleiro", "defensor", "meio-campo", "atacante"],
+      resultado_status: ["rascunho", "publicado"],
       user_role: ["admin", "jogador"],
     },
   },

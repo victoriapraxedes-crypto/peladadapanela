@@ -6,12 +6,13 @@ import { TopBar } from "@/components/layout/TopBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { hojeLocalISO } from "@/lib/format";
 
 type PeladaStatus = Database["public"]["Enums"]["pelada_status"];
 
 const STATUS_OPCOES: { value: PeladaStatus; label: string }[] = [
   { value: "aberta", label: "Aberta" },
-  { value: "confirmacao", label: "Confirmação" },
+  { value: "confirmacao", label: "Escalação" },
   { value: "times_definidos", label: "Times definidos" },
   { value: "em_andamento", label: "Em andamento" },
   { value: "finalizada", label: "Finalizada" },
@@ -86,7 +87,7 @@ export function AdminPeladaScreen() {
       const { lista, temporadas } = await carregar();
       if (!ativo) return;
 
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = hojeLocalISO();
       const proxima = [...lista]
         .filter((p) => p.data >= hoje && p.status !== "finalizada")
         .sort((a, b) => a.data.localeCompare(b.data))[0];

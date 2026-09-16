@@ -49,7 +49,7 @@ interface PlayerRow {
   nome: string;
   apelido: string;
   foto_url: string | null;
-  posicao_principal: Posicao;
+  posicao_principal: Posicao | null;
   ativo: boolean;
 }
 
@@ -309,7 +309,7 @@ export function AdminJogadoresScreen() {
                   <span className="block truncate text-xs text-muted-foreground">{p.nome}</span>
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {POSICAO_ABREV[p.posicao_principal]}
+                  {p.posicao_principal ? POSICAO_ABREV[p.posicao_principal] : "—"}
                 </span>
                 <button
                   type="button"

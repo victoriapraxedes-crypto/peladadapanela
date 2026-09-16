@@ -23,6 +23,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAcessosRouteImport } from './routes/admin.acessos'
 import { Route as AdminJogadoresRouteImport } from './routes/admin.jogadores'
 import { Route as AdminPeladaRouteImport } from './routes/admin.pelada'
+import { Route as AdminSumulaRouteImport } from './routes/admin.sumula'
 import { Route as AdminTimesRouteImport } from './routes/admin.times'
 import { Route as HistoricoIndexRouteImport } from './routes/historico.index'
 import { Route as HistoricoPeladaIdRouteImport } from './routes/historico.$peladaId'
@@ -102,6 +103,11 @@ const AdminPeladaRoute = AdminPeladaRouteImport.update({
   path: '/admin/pelada',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSumulaRoute = AdminSumulaRouteImport.update({
+  id: '/admin/sumula',
+  path: '/admin/sumula',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminTimesRoute = AdminTimesRouteImport.update({
   id: '/admin/times',
   path: '/admin/times',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
+  '/admin/sumula': typeof AdminSumulaRoute
   '/admin/times': typeof AdminTimesRoute
   '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
+  '/admin/sumula': typeof AdminSumulaRoute
   '/admin/times': typeof AdminTimesRoute
   '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/admin/acessos': typeof AdminAcessosRoute
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
+  '/admin/sumula': typeof AdminSumulaRoute
   '/admin/times': typeof AdminTimesRoute
   '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
+    | '/admin/sumula'
     | '/admin/times'
     | '/historico/$peladaId'
     | '/jogadores/$id'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
+    | '/admin/sumula'
     | '/admin/times'
     | '/historico/$peladaId'
     | '/jogadores/$id'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/admin/acessos'
     | '/admin/jogadores'
     | '/admin/pelada'
+    | '/admin/sumula'
     | '/admin/times'
     | '/historico/$peladaId'
     | '/jogadores/$id'
@@ -294,6 +306,7 @@ export interface RootRouteChildren {
   AdminAcessosRoute: typeof AdminAcessosRoute
   AdminJogadoresRoute: typeof AdminJogadoresRoute
   AdminPeladaRoute: typeof AdminPeladaRoute
+  AdminSumulaRoute: typeof AdminSumulaRoute
   AdminTimesRoute: typeof AdminTimesRoute
   HistoricoPeladaIdRoute: typeof HistoricoPeladaIdRoute
   JogadoresIdRoute: typeof JogadoresIdRoute
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPeladaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/sumula': {
+      id: '/admin/sumula'
+      path: '/admin/sumula'
+      fullPath: '/admin/sumula'
+      preLoaderRoute: typeof AdminSumulaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/times': {
       id: '/admin/times'
       path: '/admin/times'
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAcessosRoute: AdminAcessosRoute,
   AdminJogadoresRoute: AdminJogadoresRoute,
   AdminPeladaRoute: AdminPeladaRoute,
+  AdminSumulaRoute: AdminSumulaRoute,
   AdminTimesRoute: AdminTimesRoute,
   HistoricoPeladaIdRoute: HistoricoPeladaIdRoute,
   JogadoresIdRoute: JogadoresIdRoute,

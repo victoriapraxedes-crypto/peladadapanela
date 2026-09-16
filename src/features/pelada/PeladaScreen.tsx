@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Plus, X } from "lucide-react";
+import { Plus, Search, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
@@ -11,35 +11,27 @@ import { cn } from "@/lib/utils";
 import { FOCUS_RING } from "@/lib/ui";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
 import { MvpCard } from "@/features/pelada/MvpCard";
+import {
+  buscarPeladasAbertas,
+  escolherPeladaAtual,
+  type PeladaAberta,
+} from "@/features/pelada/peladaAtual";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { posicaoLabel } from "@/features/jogadores/labels";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { formatDataPorExtenso } from "@/lib/format";
+import { formatDataCurta, formatDataPorExtenso, hojeLocalISO, somarDias } from "@/lib/format";
 
-type PeladaStatus = Database["public"]["Enums"]["pelada_status"];
-type MatchStatus = Database["public"]["Enums"]["match_status"];
 type Posicao = Database["public"]["Enums"]["posicao"];
 
-const POSICAO_LABEL: Record<Posicao, string> = {
-  goleiro: "Goleiro",
-  defensor: "Defensor",
-  "meio-campo": "Meio-campo",
-  atacante: "Atacante",
-};
-
-interface PeladaAtual {
-  id: string;
-  data: string;
-  horario: string;
-  local: string;
-  status: PeladaStatus;
-}
-
-interface Confirmado {
+interface Jogador {
   id: string;
   apelido: string;
   fotoUrl: string | null;
-  posicao: Posicao;
+  posicao: Posicao | null;
+  convidado: boolean;
+  /** último dia de suspensão (inclusive), quando suspenso na data da pelada */
+  suspensoAte: string | null;
 }
 
 interface TimeComJogadores {
@@ -48,154 +40,136 @@ interface TimeComJogadores {
   jogadores: string[];
 }
 
-interface PartidaResumo {
-  id: string;
-  timeA: string;
-  timeB: string;
-  placarA: number;
-  placarB: number;
-  status: MatchStatus;
+const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+const INPUT =
+  "h-[48px] w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary";
+const BTN_SECUNDARIO = cn(
+  "flex h-[52px] min-w-0 items-center justify-center rounded-xl border border-border bg-surface-2 px-3 text-center text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+  FOCUS_RING,
+);
+
+function Foto({ j }: { j: Pick<Jogador, "apelido" | "fotoUrl"> }) {
+  if (j.fotoUrl) {
+    return (
+      <img
+        src={j.fotoUrl}
+        alt={j.apelido}
+        width={36}
+        height={36}
+        referrerPolicy="no-referrer"
+        className="h-9 w-9 shrink-0 rounded-full object-cover"
+      />
+    );
+  }
+  return <InitialsAvatar apelido={j.apelido} size={36} />;
 }
 
-const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
+function Detalhe({ j }: { j: Jogador }) {
+  if (j.suspensoAte) {
+    return (
+      <span className="shrink-0 whitespace-nowrap text-xs text-destructive">
+        Suspenso até {formatDataCurta(j.suspensoAte)}
+      </span>
+    );
+  }
+  return (
+    <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+      {j.convidado ? "Convidado" : posicaoLabel(j.posicao)}
+    </span>
+  );
+}
 
 export function PeladaScreen() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === "admin";
 
-  const [pelada, setPelada] = useState<PeladaAtual | null>(null);
-  const [confirmados, setConfirmados] = useState<Confirmado[]>([]);
-  const [naoConfirmados, setNaoConfirmados] = useState<Confirmado[]>([]);
+  const [abertas, setAbertas] = useState<PeladaAberta[]>([]);
+  const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
+  const [escalados, setEscalados] = useState<Jogador[]>([]);
+  const [disponiveis, setDisponiveis] = useState<Jogador[]>([]);
   const [times, setTimes] = useState<TimeComJogadores[]>([]);
-  const [partidas, setPartidas] = useState<PartidaResumo[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
   const [tentativa, setTentativa] = useState(0);
-  const [presencaBusyId, setPresencaBusyId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
+  const [convidado, setConvidado] = useState("");
+  const [criandoConvidado, setCriandoConvidado] = useState(false);
 
-  const hojeISO = new Date().toISOString().slice(0, 10);
+  const hojeISO = hojeLocalISO();
+  const pelada = abertas.find((p) => p.id === selecionadaId) ?? null;
 
-  // "Ainda não confirmaram" é derivado: não existe estado "recusado" no banco,
-  // a linha em pelada_players existe ou não existe.
-  const fetchConfirmados = useCallback(async (peladaId: string) => {
-    const [{ data, error: errConf }, { data: ativos, error: errAtivos }] = await Promise.all([
-      supabase
-        .from("pelada_players")
-        .select("player_id, players(id, apelido, foto_url, posicao_principal)")
-        .eq("pelada_id", peladaId),
-      supabase
-        .from("players")
-        .select("id, apelido, foto_url, posicao_principal")
-        .eq("ativo", true)
-        .order("apelido", { ascending: true }),
-    ]);
-
-    if (errConf || errAtivos) {
-      setErro(true);
-      return;
-    }
-
-    const lista = (data ?? [])
-      .filter((row) => row.players)
-      .map((row) => ({
-        id: row.player_id,
-        apelido: row.players!.apelido,
-        fotoUrl: row.players!.foto_url,
-        posicao: row.players!.posicao_principal,
-      }));
-    setConfirmados(lista);
-
-    const confirmadosIds = new Set(lista.map((c) => c.id));
-    setNaoConfirmados(
-      (ativos ?? [])
-        .filter((p) => !confirmadosIds.has(p.id))
-        .map((p) => ({
-          id: p.id,
-          apelido: p.apelido,
-          fotoUrl: p.foto_url,
-          posicao: p.posicao_principal,
-        })),
-    );
-  }, []);
-
-  const removerPresenca = async (peladaId: string, c: Confirmado) => {
-    if (presencaBusyId) return;
-    setPresencaBusyId(c.id);
-    const { error } = await supabase
-      .from("pelada_players")
-      .delete()
-      .eq("pelada_id", peladaId)
-      .eq("player_id", c.id);
-    if (error) toast.error("Não foi possível remover a presença. " + error.message);
-    else {
-      await fetchConfirmados(peladaId);
-      toast.success(`${c.apelido} removido.`);
-    }
-    setPresencaBusyId(null);
-  };
-
-  const adicionarPresenca = async (peladaId: string, c: Confirmado) => {
-    if (presencaBusyId) return;
-    setPresencaBusyId(c.id);
-    const { error } = await supabase
-      .from("pelada_players")
-      .insert({ pelada_id: peladaId, player_id: c.id });
-    if (error) toast.error("Não foi possível confirmar a presença. " + error.message);
-    else {
-      await fetchConfirmados(peladaId);
-      toast.success(`${c.apelido} confirmado.`);
-    }
-    setPresencaBusyId(null);
-  };
-
-  useEffect(() => {
-    let ativo = true;
-    (async () => {
-      setLoading(true);
-      setErro(false);
-      const { data: abertas, error } = await supabase
-        .from("peladas")
-        .select("id, data, horario, local, status")
-        .neq("status", "finalizada")
-        .order("data", { ascending: true });
-
-      if (!ativo) return;
-      if (error) {
-        setErro(true);
-        setLoading(false);
-        return;
-      }
-      const lista = abertas ?? [];
-      // Próxima pelada; se não houver, a mais recente ainda em aberto (não some do app).
-      const data = lista.find((p) => p.data >= hojeISO) ?? [...lista].reverse()[0] ?? null;
-      if (!data) {
-        setPelada(null);
-        setConfirmados([]);
-        setNaoConfirmados([]);
-        setTimes([]);
-        setPartidas([]);
-        setLoading(false);
-        return;
-      }
-      setPelada(data);
-
-
-      const [{ data: teamRows }, { data: matchRows }] = await Promise.all([
+  const carregarEscalacao = useCallback(
+    async (p: PeladaAberta) => {
+      const [
+        { data: escRows, error: errEsc },
+        { data: ativos, error: errAtivos },
+        { data: teamRows, error: errTimes },
+      ] = await Promise.all([
+        supabase
+          .from("pelada_players")
+          .select("player_id, players(id, apelido, foto_url, posicao_principal, profile_id)")
+          .eq("pelada_id", p.id),
+        supabase
+          .from("players")
+          .select("id, apelido, foto_url, posicao_principal, profile_id")
+          .eq("ativo", true)
+          .order("apelido", { ascending: true }),
         supabase
           .from("teams")
           .select("id, nome, ordem, team_players(players(id, apelido))")
-          .eq("pelada_id", data.id)
-          .order("ordem", { ascending: true }),
-        supabase
-          .from("matches")
-          .select(
-            "id, ordem, placar_a, placar_b, status, team_a:team_a_id(nome), team_b:team_b_id(nome)",
-          )
-          .eq("pelada_id", data.id)
+          .eq("pelada_id", p.id)
           .order("ordem", { ascending: true }),
       ]);
 
-      if (!ativo) return;
+      if (errEsc || errAtivos || errTimes) {
+        setErro(true);
+        return;
+      }
+
+      // Suspensões só são legíveis por admin (RLS); para jogador comum a lista vem vazia.
+      const suspensoes = new Map<string, string>();
+      if (isAdmin) {
+        const { data: ocorrencias } = await supabase
+          .from("ocorrencias_disciplinares")
+          .select("player_id, data_ocorrencia, suspenso_ate")
+          .eq("anulada", false)
+          .lt("data_ocorrencia", p.data)
+          .gt("suspenso_ate", p.data);
+        for (const o of ocorrencias ?? []) {
+          const ultimoDia = somarDias(o.suspenso_ate, -1);
+          const atual = suspensoes.get(o.player_id);
+          if (!atual || ultimoDia > atual) suspensoes.set(o.player_id, ultimoDia);
+        }
+      }
+
+      const lista: Jogador[] = (escRows ?? [])
+        .filter((row) => row.players)
+        .map((row) => ({
+          id: row.player_id,
+          apelido: row.players!.apelido,
+          fotoUrl: row.players!.foto_url,
+          posicao: row.players!.posicao_principal,
+          convidado: row.players!.profile_id === null,
+          suspensoAte: null,
+        }))
+        .sort((a, b) => a.apelido.localeCompare(b.apelido, "pt-BR"));
+      setEscalados(lista);
+
+      const ids = new Set(lista.map((j) => j.id));
+      setDisponiveis(
+        (ativos ?? [])
+          .filter((j) => !ids.has(j.id))
+          .map((j) => ({
+            id: j.id,
+            apelido: j.apelido,
+            fotoUrl: j.foto_url,
+            posicao: j.posicao_principal,
+            convidado: j.profile_id === null,
+            suspensoAte: suspensoes.get(j.id) ?? null,
+          })),
+      );
+
       setTimes(
         (teamRows ?? []).map((t) => ({
           id: t.id,
@@ -205,46 +179,66 @@ export function PeladaScreen() {
             .filter((a): a is string => !!a),
         })),
       );
-      setPartidas(
-        (matchRows ?? []).map((m) => ({
-          id: m.id,
-          timeA: m.team_a?.nome ?? "Time A",
-          timeB: m.team_b?.nome ?? "Time B",
-          placarA: m.placar_a,
-          placarB: m.placar_b,
-          status: m.status,
-        })),
-      );
+    },
+    [isAdmin],
+  );
 
-      await fetchConfirmados(data.id);
+  useEffect(() => {
+    let ativo = true;
+    (async () => {
+      setLoading(true);
+      setErro(false);
+      const { data, error } = await buscarPeladasAbertas();
+      if (!ativo) return;
+      if (error) {
+        setErro(true);
+        setLoading(false);
+        return;
+      }
+      const lista = data ?? [];
+      setAbertas(lista);
+      const atual =
+        lista.find((p) => p.id === selecionadaId) ?? escolherPeladaAtual(lista, hojeISO);
+      setSelecionadaId(atual?.id ?? null);
+      if (atual) await carregarEscalacao(atual);
       if (ativo) setLoading(false);
     })();
     return () => {
       ativo = false;
     };
-  }, [hojeISO, fetchConfirmados, tentativa]);
+    // selecionadaId fica de fora de propósito: trocar de pelada usa o efeito abaixo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hojeISO, carregarEscalacao, tentativa]);
 
-  const fetchConfirmadosRef = useRef(fetchConfirmados);
+  const trocarPelada = async (id: string) => {
+    const p = abertas.find((x) => x.id === id);
+    if (!p || id === selecionadaId) return;
+    setSelecionadaId(id);
+    setBusca("");
+    await carregarEscalacao(p);
+  };
+
+  const carregarRef = useRef(carregarEscalacao);
   useEffect(() => {
-    fetchConfirmadosRef.current = fetchConfirmados;
-  }, [fetchConfirmados]);
+    carregarRef.current = carregarEscalacao;
+  }, [carregarEscalacao]);
 
   // Um único canal por pelada: a assinatura só depende do id.
-  const peladaId = pelada?.id ?? null;
   useEffect(() => {
-    if (!peladaId) return;
+    if (!pelada) return;
+    const alvo = pelada;
     const channel = supabase
-      .channel(`pelada_screen:${peladaId}`)
+      .channel(`pelada_screen:${alvo.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "pelada_players",
-          filter: `pelada_id=eq.${peladaId}`,
+          filter: `pelada_id=eq.${alvo.id}`,
         },
         () => {
-          void fetchConfirmadosRef.current(peladaId);
+          void carregarRef.current(alvo);
         },
       )
       .subscribe();
@@ -252,7 +246,79 @@ export function PeladaScreen() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [peladaId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pelada?.id]);
+
+  const remover = async (j: Jogador) => {
+    if (!pelada || busyId) return;
+    setBusyId(j.id);
+    const { error } = await supabase
+      .from("pelada_players")
+      .delete()
+      .eq("pelada_id", pelada.id)
+      .eq("player_id", j.id);
+    if (error) {
+      toast.error(
+        error.code === "23503"
+          ? `${j.apelido} já tem números na súmula. Zere a súmula antes de tirar da escalação.`
+          : "Não foi possível tirar da escalação. " + error.message,
+      );
+    } else {
+      await carregarEscalacao(pelada);
+      toast.success(`${j.apelido} saiu da escalação.`);
+    }
+    setBusyId(null);
+  };
+
+  const escalar = async (j: Pick<Jogador, "id" | "apelido">) => {
+    if (!pelada || busyId) return;
+    setBusyId(j.id);
+    const { error } = await supabase
+      .from("pelada_players")
+      .insert({ pelada_id: pelada.id, player_id: j.id });
+    if (error) toast.error(error.message);
+    else {
+      await carregarEscalacao(pelada);
+      toast.success(`${j.apelido} escalado.`);
+    }
+    setBusyId(null);
+  };
+
+  const adicionarConvidado = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const apelido = convidado.trim();
+    if (!pelada || !apelido || criandoConvidado) return;
+
+    const existente = disponiveis.find(
+      (j) => j.apelido.localeCompare(apelido, "pt-BR", { sensitivity: "base" }) === 0,
+    );
+    if (existente) {
+      toast.message(`${existente.apelido} já está cadastrado. Escale pela lista.`);
+      setBusca(existente.apelido);
+      return;
+    }
+
+    setCriandoConvidado(true);
+    const { data: novo, error } = await supabase
+      .from("players")
+      .insert({ nome: apelido, apelido })
+      .select("id, apelido")
+      .single();
+    if (error || !novo) {
+      toast.error("Não foi possível cadastrar o convidado. " + (error?.message ?? ""));
+      setCriandoConvidado(false);
+      return;
+    }
+    setConvidado("");
+    setCriandoConvidado(false);
+    await escalar(novo);
+  };
+
+  const filtrados = useMemo(() => {
+    const termo = busca.trim().toLocaleLowerCase("pt-BR");
+    if (!termo) return disponiveis;
+    return disponiveis.filter((j) => j.apelido.toLocaleLowerCase("pt-BR").includes(termo));
+  }, [busca, disponiveis]);
 
   if (erro) {
     return (
@@ -271,8 +337,10 @@ export function PeladaScreen() {
         <TopBar />
         <Skeleton className="mt-2 h-8 w-3/4" />
         <Skeleton className="mt-3 h-4 w-1/2" />
-        <Skeleton className="mt-5 h-[220px] w-full rounded-2xl" />
-        <Skeleton className="mt-5 h-[120px] w-full rounded-2xl" />
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <Skeleton className="h-[260px] w-full rounded-2xl" />
+          <Skeleton className="h-[260px] w-full rounded-2xl" />
+        </div>
       </>
     );
   }
@@ -286,7 +354,7 @@ export function PeladaScreen() {
             Nenhuma pelada marcada
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Assim que a próxima for aberta ela aparece aqui.
+            Assim que a próxima for marcada ela aparece aqui.
           </p>
           {isAdmin && (
             <Link
@@ -300,6 +368,7 @@ export function PeladaScreen() {
             </Link>
           )}
         </section>
+        <MvpCard />
       </>
     );
   }
@@ -308,8 +377,30 @@ export function PeladaScreen() {
     <>
       <TopBar />
 
+      {isAdmin && abertas.length > 1 && (
+        <nav aria-label="Peladas em aberto" className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1">
+          {abertas.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              aria-pressed={p.id === pelada.id}
+              onClick={() => void trocarPelada(p.id)}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+                p.id === pelada.id
+                  ? "border-primary bg-surface-2 text-foreground"
+                  : "border-border text-muted-foreground hover:border-primary/40",
+                FOCUS_RING,
+              )}
+            >
+              {formatDataCurta(p.data)} · {p.local}
+            </button>
+          ))}
+        </nav>
+      )}
+
       <header className="pt-2">
-        <h1 className="font-display text-2xl font-bold leading-tight tracking-[-0.02em] text-foreground">
+        <h1 className="font-display text-2xl font-bold leading-tight tracking-[-0.02em] text-foreground md:text-3xl">
           {formatDataPorExtenso(pelada.data)}
         </h1>
         <p className="mt-1 truncate text-sm text-muted-foreground">
@@ -320,195 +411,177 @@ export function PeladaScreen() {
         </p>
         {pelada.data < hojeISO && (
           <p className="mt-3 rounded-xl border border-primary/40 bg-surface p-3 text-xs text-muted-foreground">
-            Esta pelada já aconteceu e continua em aberto. Ela só vai para o histórico quando um
-            admin encerrar.
+            Esta pelada já aconteceu e continua em aberto. Ela vai para o histórico quando o
+            resultado for publicado.
           </p>
         )}
       </header>
 
-
-      <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className={SECTION_LABEL}>Confirmados</p>
-          <span className="num text-2xl text-foreground">{confirmados.length}</span>
-        </div>
-
-        {confirmados.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">Ninguém confirmou ainda.</p>
-        ) : (
-          <ul className="mt-3">
-            {confirmados.map((c) => (
-              <li
-                key={c.id}
-                className={`grid items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0 ${
-                  isAdmin
-                    ? "grid-cols-[auto_minmax(0,1fr)_auto_auto]"
-                    : "grid-cols-[auto_minmax(0,1fr)_auto]"
-                }`}
-              >
-                {c.fotoUrl ? (
-                  <img
-                    src={c.fotoUrl}
-                    alt={c.apelido}
-                    width={36}
-                    height={36}
-                    referrerPolicy="no-referrer"
-                    className="h-9 w-9 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <InitialsAvatar apelido={c.apelido} size={36} />
-                )}
-                <span className="truncate text-sm text-foreground">{c.apelido}</span>
-                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
-                  {POSICAO_LABEL[c.posicao]}
-                </span>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    aria-label={"Remover " + c.apelido}
-                    disabled={presencaBusyId === c.id}
-                    onClick={() => void removerPresenca(pelada.id, c)}
-                    className={cn(
-                      "flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50",
-                      FOCUS_RING,
-                    )}
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <MvpCard />
-
-      {isAdmin && (
-        <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
+      <div className="mt-5 grid items-start gap-5 lg:grid-cols-2">
+        <section className="rounded-2xl border border-border bg-surface p-5">
           <div className="flex items-baseline justify-between gap-3">
-            <p className={SECTION_LABEL}>Ainda não confirmaram</p>
-            <span className="num text-2xl text-foreground">{naoConfirmados.length}</span>
+            <p className={SECTION_LABEL}>Escalados</p>
+            <span className="num text-2xl text-foreground">{escalados.length}</span>
           </div>
 
-          {naoConfirmados.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">Todo mundo já confirmou.</p>
+          {escalados.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              {isAdmin
+                ? "Ninguém escalado ainda. Adicione os jogadores ao lado."
+                : "A escalação ainda não foi montada pelos admins."}
+            </p>
           ) : (
             <ul className="mt-3">
-              {naoConfirmados.map((c) => (
+              {escalados.map((j) => (
                 <li
-                  key={c.id}
-                  className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0"
-                >
-                  {c.fotoUrl ? (
-                    <img
-                      src={c.fotoUrl}
-                      alt={c.apelido}
-                      width={36}
-                      height={36}
-                      referrerPolicy="no-referrer"
-                      className="h-9 w-9 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <InitialsAvatar apelido={c.apelido} size={36} />
+                  key={j.id}
+                  className={cn(
+                    "grid items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0",
+                    isAdmin
+                      ? "grid-cols-[auto_minmax(0,1fr)_auto_auto]"
+                      : "grid-cols-[auto_minmax(0,1fr)_auto]",
                   )}
-                  <span className="truncate text-sm text-foreground">{c.apelido}</span>
-                  <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
-                    {POSICAO_LABEL[c.posicao]}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={"Adicionar " + c.apelido}
-                    disabled={presencaBusyId === c.id}
-                    onClick={() => void adicionarPresenca(pelada.id, c)}
-                    className={cn(
-                      "flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-primary disabled:opacity-50",
-                      FOCUS_RING,
-                    )}
-                  >
-                    <Plus size={16} />
-                  </button>
+                >
+                  <Foto j={j} />
+                  <span className="truncate text-sm text-foreground">{j.apelido}</span>
+                  <Detalhe j={j} />
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      aria-label={"Tirar " + j.apelido + " da escalação"}
+                      disabled={busyId === j.id}
+                      onClick={() => void remover(j)}
+                      className={cn(
+                        "flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50",
+                        FOCUS_RING,
+                      )}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
           )}
         </section>
-      )}
 
-      <section className="mt-5">
-        <p className={SECTION_LABEL}>Times</p>
-        {times.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">Times ainda não definidos.</p>
-        ) : (
-          <div className="mt-3 grid gap-3">
-            {times.map((t) => (
-              <div key={t.id} className="rounded-2xl border border-border bg-surface p-5">
-                <h3 className="font-display text-base font-semibold text-foreground">{t.nome}</h3>
-                <ul className="mt-2 grid gap-1">
-                  {t.jogadores.map((apelido) => (
-                    <li key={apelido} className="truncate text-sm text-muted-foreground">
-                      {apelido}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+        <div className="grid gap-5">
+          {isAdmin && (
+            <section className="rounded-2xl border border-border bg-surface p-5">
+              <p className={SECTION_LABEL}>Adicionar à escalação</p>
 
-      <section className="mt-5">
-        <p className={SECTION_LABEL}>Partidas</p>
-        {partidas.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">Nenhuma partida ainda.</p>
-        ) : (
-          <ul className="mt-3 rounded-2xl border border-border bg-surface px-5">
-            {partidas.map((p) => (
-              <li key={p.id} className="border-b border-border last:border-b-0">
-                <Link
-                  to="/partida/$id"
-                  params={{ id: p.id }}
+              <form onSubmit={adicionarConvidado} className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <label htmlFor="novo-convidado" className="sr-only">
+                  Nome ou apelido do convidado
+                </label>
+                <input
+                  id="novo-convidado"
+                  value={convidado}
+                  onChange={(e) => setConvidado(e.target.value)}
+                  placeholder="Convidado sem conta (nome ou apelido)"
+                  maxLength={40}
+                  className={INPUT}
+                />
+                <button
+                  type="submit"
+                  disabled={!convidado.trim() || criandoConvidado}
+                  aria-label="Adicionar convidado"
                   className={cn(
-                    "grid min-h-[44px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4 transition-colors hover:text-primary",
+                    "flex h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary-dim disabled:opacity-50",
                     FOCUS_RING,
                   )}
                 >
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm text-foreground">
-                      {p.timeA} x {p.timeB}
-                    </span>
-                    <span className="mt-1 block">
-                      <StatusBadge status={p.status} />
-                    </span>
-                  </span>
-                  <span className="num shrink-0 whitespace-nowrap text-xl text-foreground">
-                    {p.placarA} – {p.placarB}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                  <UserPlus size={18} />
+                </button>
+              </form>
+
+              <div className="relative mt-3">
+                <Search
+                  size={16}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <label htmlFor="busca-jogador" className="sr-only">
+                  Buscar jogador cadastrado
+                </label>
+                <input
+                  id="busca-jogador"
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar jogador cadastrado"
+                  className={cn(INPUT, "pl-10")}
+                />
+              </div>
+
+              {filtrados.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {disponiveis.length === 0
+                    ? "Todos os jogadores ativos já estão escalados."
+                    : "Ninguém com esse nome."}
+                </p>
+              ) : (
+                <ul className="mt-3 max-h-[420px] overflow-y-auto pr-1">
+                  {filtrados.map((j) => (
+                    <li
+                      key={j.id}
+                      className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-border py-3 last:border-b-0 last:pb-0"
+                    >
+                      <Foto j={j} />
+                      <span className="truncate text-sm text-foreground">{j.apelido}</span>
+                      <Detalhe j={j} />
+                      <button
+                        type="button"
+                        aria-label={"Escalar " + j.apelido}
+                        disabled={busyId === j.id || j.suspensoAte !== null}
+                        onClick={() => void escalar(j)}
+                        className={cn(
+                          "flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-primary disabled:opacity-40",
+                          FOCUS_RING,
+                        )}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
+          <section>
+            <p className={SECTION_LABEL}>Times</p>
+            {times.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">Times ainda não sorteados.</p>
+            ) : (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {times.map((t) => (
+                  <div key={t.id} className="rounded-2xl border border-border bg-surface p-5">
+                    <h3 className="font-display text-base font-semibold text-foreground">{t.nome}</h3>
+                    <ul className="mt-2 grid gap-1">
+                      {t.jogadores.map((apelido) => (
+                        <li key={apelido} className="truncate text-sm text-muted-foreground">
+                          {apelido}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
+      <MvpCard />
 
       {isAdmin && (
-        <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-3">
-          <Link
-            to="/admin/times"
-            className={cn(
-              "flex h-[52px] min-w-0 items-center justify-center rounded-xl border border-border bg-surface-2 px-2 text-center text-sm font-medium text-foreground transition-colors hover:border-primary/40",
-              FOCUS_RING,
-            )}
-          >
-            <span className="truncate">Montar times</span>
+        <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+          <Link to="/admin/times" className={BTN_SECUNDARIO}>
+            <span className="truncate">Sortear times</span>
           </Link>
-          <Link
-            to="/admin"
-            className={cn(
-              "flex h-[52px] min-w-0 items-center justify-center rounded-xl border border-border bg-surface-2 px-2 text-center text-sm font-medium text-foreground transition-colors hover:border-primary/40",
-              FOCUS_RING,
-            )}
-          >
+          <Link to="/admin/sumula" className={BTN_SECUNDARIO}>
+            <span className="truncate">Súmula</span>
+          </Link>
+          <Link to="/admin" className={BTN_SECUNDARIO}>
             <span className="truncate">Painel</span>
           </Link>
         </div>

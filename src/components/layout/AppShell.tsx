@@ -4,7 +4,9 @@ import { BottomNav } from "./BottomNav";
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-md px-5 pb-28">{children}</div>
+      <div className="mx-auto w-full max-w-md px-5 pb-28 md:max-w-2xl md:px-8 lg:max-w-4xl">
+        {children}
+      </div>
       <BottomNav />
     </div>
   );

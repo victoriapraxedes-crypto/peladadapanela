@@ -5,7 +5,7 @@ type MatchStatus = Database["public"]["Enums"]["match_status"];
 
 const LABELS: Record<string, string> = {
   aberta: "Aberta",
-  confirmacao: "Confirmação",
+  confirmacao: "Escalação",
   times_definidos: "Times definidos",
   em_andamento: "Em andamento",
   finalizada: "Finalizada",

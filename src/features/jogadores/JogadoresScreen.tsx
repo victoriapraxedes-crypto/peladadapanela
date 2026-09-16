@@ -9,7 +9,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { POSICAO_LABEL } from "@/features/jogadores/labels";
+import { posicaoLabel } from "@/features/jogadores/labels";
 import { cn } from "@/lib/utils";
 import { FOCUS_RING } from "@/lib/ui";
 
@@ -170,7 +170,7 @@ export function JogadoresScreen() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm text-foreground">{player.apelido}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {POSICAO_LABEL[player.posicao_principal]}
+                        {posicaoLabel(player.posicao_principal)}
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-2 sm:gap-4">

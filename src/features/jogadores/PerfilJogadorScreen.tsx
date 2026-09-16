@@ -10,7 +10,7 @@ import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FOCUS_RING } from "@/lib/ui";
 import { formatDataPorExtenso } from "@/lib/format";
-import { PE_LABEL, POSICAO_LABEL } from "@/features/jogadores/labels";
+import { PE_LABEL, POSICAO_LABEL, posicaoLabel } from "@/features/jogadores/labels";
 
 type PlayerRow = Tables<"players">;
 type StatsRow = Tables<"player_stats">;
@@ -199,7 +199,7 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
   }
 
   const pilulas: { texto: string; suave?: boolean }[] = [
-    { texto: POSICAO_LABEL[player.posicao_principal] },
+    { texto: posicaoLabel(player.posicao_principal) },
     { texto: PE_LABEL[player.pe_dominante] },
     ...(player.numero_preferido ? [{ texto: `#${player.numero_preferido}` }] : []),
     ...player.posicoes_secundarias.map((p) => ({ texto: POSICAO_LABEL[p], suave: true })),

@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, ChevronRight, Users, History } from "lucide-react";
-import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { buscarPeladasAbertas, escolherPeladaAtual } from "@/features/pelada/peladaAtual";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDataPorExtenso } from "@/lib/format";
+import { formatDataPorExtenso, hojeLocalISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FOCUS_RING } from "@/lib/ui";
 
@@ -158,11 +158,10 @@ function NextPeladaCard() {
   const [pelada, setPelada] = useState<PeladaAtual | null>(null);
   const [confirmados, setConfirmados] = useState<Confirmado[]>([]);
   const [loading, setLoading] = useState(true);
-  const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState(false);
   const [tentativa, setTentativa] = useState(0);
 
-  const hojeISO = new Date().toISOString().slice(0, 10);
+  const hojeISO = hojeLocalISO();
 
   const fetchConfirmados = useCallback(async (peladaId: string) => {
     const { data } = await supabase
@@ -183,16 +182,10 @@ function NextPeladaCard() {
     (async () => {
       setLoading(true);
       setErro(false);
-      const { data, error } = await supabase
-        .from("peladas")
-        .select("id, data, horario, local, seasons(nome)")
-        .gte("data", hojeISO)
-        .neq("status", "finalizada")
-        .order("data", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+      const { data: abertas, error } = await buscarPeladasAbertas();
 
       if (!ativo) return;
+      const data = escolherPeladaAtual(abertas ?? [], hojeISO);
       if (error) {
         setErro(true);
         setPelada(null);
@@ -283,43 +276,13 @@ function NextPeladaCard() {
   const total = confirmados.length;
   const visiveis = confirmados.slice(0, 6);
   const restantes = total - visiveis.length;
-  const confirmado = !!player && confirmados.some((c) => c.playerId === player.id);
-
-  const handleToggle = async () => {
-    if (!player || enviando) return;
-    setEnviando(true);
-    const anterior = confirmados;
-
-    if (confirmado) {
-      setConfirmados((c) => c.filter((x) => x.playerId !== player.id));
-      const { error } = await supabase
-        .from("pelada_players")
-        .delete()
-        .eq("pelada_id", pelada.id)
-        .eq("player_id", player.id);
-      if (error) {
-        setConfirmados(anterior);
-        toast.error("Não foi possível desmarcar sua presença. " + error.message);
-      }
-    } else {
-      setConfirmados((c) => [...c, { playerId: player.id, apelido: player.apelido }]);
-      const { error } = await supabase
-        .from("pelada_players")
-        .insert({ pelada_id: pelada.id, player_id: player.id });
-      if (error) {
-        setConfirmados(anterior);
-        toast.error("Não foi possível confirmar sua presença. " + error.message);
-      }
-    }
-
-    await fetchConfirmados(pelada.id);
-    setEnviando(false);
-  };
+  const escalado = !!player && confirmados.some((c) => c.playerId === player.id);
+  const passada = pelada.data < hojeISO;
 
   return (
     <CardFrame>
       <p className="font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary">
-        Próxima pelada
+        {passada ? "Pelada em aberto" : "Próxima pelada"}
       </p>
       <h2 className="mt-2 font-display text-2xl font-bold leading-tight tracking-[-0.02em] text-foreground">
         {formatDataPorExtenso(pelada.data)}
@@ -330,12 +293,14 @@ function NextPeladaCard() {
 
       <div className="mt-5 flex items-baseline gap-2">
         <span className="num text-4xl text-foreground">{total}</span>
-        <span className="text-sm text-muted-foreground">confirmados</span>
+        <span className="text-sm text-muted-foreground">
+          {total === 1 ? "escalado" : "escalados"}
+        </span>
       </div>
 
       {total === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
-          Ninguém confirmou ainda. Seja o primeiro.
+          A escalação é montada pelos admins e aparece aqui.
         </p>
       ) : (
         <div className="mt-3 flex items-center">
@@ -359,21 +324,22 @@ function NextPeladaCard() {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => void handleToggle()}
-        disabled={enviando}
+      {escalado && (
+        <p className="mt-4 flex items-center gap-2 text-sm text-foreground">
+          <Check size={18} className="text-success" />
+          Você está na escalação.
+        </p>
+      )}
+
+      <Link
+        to="/pelada"
         className={cn(
-          "mt-5 flex h-[52px] w-full items-center justify-center gap-2 rounded-xl font-display text-sm font-semibold uppercase tracking-[-0.01em] transition-colors disabled:opacity-60",
-          confirmado
-            ? "border border-primary bg-transparent text-foreground"
-            : "bg-primary text-primary-foreground hover:bg-primary-dim",
+          "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-border bg-surface-2 font-display text-sm font-semibold uppercase tracking-[-0.01em] text-foreground transition-colors hover:border-primary/40",
           FOCUS_RING,
         )}
       >
-        {!enviando && confirmado && <Check size={18} className="text-success" />}
-        {enviando ? "Confirmando..." : confirmado ? "Presença confirmada" : "Confirmar presença"}
-      </button>
+        Ver escalação e times
+      </Link>
     </CardFrame>
   );
 }

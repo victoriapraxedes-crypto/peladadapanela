@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarCog, ChevronRight, Play, Users, Shuffle, UserCheck } from "lucide-react";
+import {
+  CalendarCog,
+  ChevronRight,
+  ClipboardCheck,
+  ClipboardList,
+  Users,
+  Shuffle,
+  UserCheck,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -18,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { formatDataPorExtenso } from "@/lib/format";
+import { formatDataPorExtenso, hojeLocalISO } from "@/lib/format";
 
 type PeladaStatus = Database["public"]["Enums"]["pelada_status"];
 
@@ -44,17 +52,24 @@ const ACOES = [
     descricao: "Cadastrar, ativar e desativar.",
   },
   {
-    to: "/admin/times" as const,
-    icon: Shuffle,
-    titulo: "Montar times",
-    descricao: "Distribuir os confirmados.",
+    to: "/pelada" as const,
+    icon: ClipboardList,
+    titulo: "Escalação",
+    descricao: "Escolher quem joga e adicionar convidados.",
   },
   {
     to: "/admin/times" as const,
-    icon: Play,
-    titulo: "Iniciar partida",
-    descricao: "Escolher os times e começar.",
+    icon: Shuffle,
+    titulo: "Sortear times",
+    descricao: "Dividir os escalados, se quiser.",
   },
+  {
+    to: "/admin/sumula" as const,
+    icon: ClipboardCheck,
+    titulo: "Súmula",
+    descricao: "Lançar gols, assistências e carrinhos e publicar.",
+  },
+
   {
     to: "/admin/acessos" as const,
     icon: UserCheck,
@@ -72,7 +87,7 @@ export function AdminPanel() {
   const [encerrando, setEncerrando] = useState(false);
   const [versao, setVersao] = useState(0);
   const [pendentes, setPendentes] = useState(0);
-  const hojeISO = new Date().toISOString().slice(0, 10);
+  const hojeISO = hojeLocalISO();
 
   useEffect(() => {
     let ativo = true;
@@ -125,7 +140,6 @@ export function AdminPanel() {
     };
   }, [hojeISO, versao]);
 
-
   const encerrarPelada = useCallback(async () => {
     if (!alvoEncerrar || encerrando) return;
     setEncerrando(true);
@@ -159,7 +173,6 @@ export function AdminPanel() {
           {pelada && pelada.data < hojeISO ? "Pelada em aberto" : "Próxima pelada"}
         </p>
 
-
         {loading ? (
           <>
             <Skeleton className="mt-3 h-7 w-3/4" />
@@ -176,7 +189,7 @@ export function AdminPanel() {
             </p>
             <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-2">
               <span className="num text-4xl text-foreground">{confirmados}</span>
-              <span className="text-sm text-muted-foreground">confirmados</span>
+              <span className="text-sm text-muted-foreground">escalados</span>
               <StatusBadge status={pelada.status} />
             </div>
             <div className="mt-5 grid gap-3">
@@ -184,21 +197,20 @@ export function AdminPanel() {
                 to="/pelada"
                 className="flex h-[52px] w-full items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim"
               >
-                Retomar pelada
+                Abrir escalação
               </Link>
               <Link
-                to="/historico/$peladaId"
-                params={{ peladaId: pelada.id }}
+                to="/admin/sumula"
                 className="flex h-[52px] w-full items-center justify-center rounded-xl border border-border text-sm font-medium text-foreground"
               >
-                Ver súmula
+                Lançar súmula
               </Link>
               <button
                 type="button"
                 onClick={() => setAlvoEncerrar(pelada)}
                 className="flex h-[52px] w-full items-center justify-center rounded-xl border border-border text-sm font-medium text-foreground"
               >
-                Encerrar pelada
+                Encerrar sem resultado
               </button>
             </div>
           </>
@@ -223,7 +235,7 @@ export function AdminPanel() {
             Peladas em aberto
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Nenhuma pelada some do app: ela fica aqui até você encerrar.
+            Nenhuma pelada some do app: ela fica aqui até o resultado ser publicado.
           </p>
           <ul className="mt-3 grid gap-3">
             {emAberto.map((p) => (
@@ -250,7 +262,7 @@ export function AdminPanel() {
                     onClick={() => setAlvoEncerrar(p)}
                     className="flex h-[44px] items-center justify-center rounded-lg border border-border text-xs font-medium text-foreground"
                   >
-                    Encerrar
+                    Encerrar sem resultado
                   </button>
                 </div>
               </li>
@@ -258,8 +270,6 @@ export function AdminPanel() {
           </ul>
         </section>
       )}
-
-
 
       <nav className="mt-5 grid gap-3">
         {ACOES.map((acao) => (
@@ -295,9 +305,10 @@ export function AdminPanel() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Encerrar a pelada?</AlertDialogTitle>
+            <AlertDialogTitle>Encerrar sem resultado?</AlertDialogTitle>
             <AlertDialogDescription>
-              A pelada vai para o histórico. As partidas já encerradas continuam registradas.
+              Use só para pelada que não aconteceu. Ela vai para o histórico sem pontuar ninguém.
+              Para fechar uma pelada jogada, publique a súmula.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
