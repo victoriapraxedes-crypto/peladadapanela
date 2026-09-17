@@ -30,6 +30,8 @@ interface Participante {
   id: string;
   apelido: string;
   fotoUrl: string | null;
+  /** convidado sem conta não vota, mas pode receber voto */
+  votante: boolean;
 }
 
 interface Dados {
@@ -97,7 +99,7 @@ export function MvpCard() {
     const [{ data: parts }, { data: votos }, { data: winners }] = await Promise.all([
       supabase
         .from("pelada_players")
-        .select("player_id, players(id, apelido, foto_url)")
+        .select("player_id, players(id, apelido, foto_url, profile_id)")
         .eq("pelada_id", alvoPelada.id),
       supabase
         .from("mvp_votes")
@@ -112,6 +114,7 @@ export function MvpCard() {
         id: r.player_id,
         apelido: r.players!.apelido,
         fotoUrl: r.players!.foto_url,
+        votante: r.players!.profile_id !== null,
       }))
       .sort((a, b) => a.apelido.localeCompare(b.apelido, "pt-BR"));
 
@@ -168,7 +171,7 @@ export function MvpCard() {
 
   if (!dados) return null;
 
-  const total = dados.participantes.length;
+  const total = dados.participantes.filter((p) => p.votante).length;
   const fechada = total > 0 && dados.totalVotos >= total;
   const votadoPorMim = dados.participantes.find((p) => p.id === dados.meuVotoEm);
   const vencedores = dados.vencedores

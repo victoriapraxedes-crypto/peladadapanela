@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   CalendarCog,
+  CalendarRange,
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
@@ -46,10 +47,16 @@ const ACOES = [
     descricao: "Data, horário, local e status.",
   },
   {
+    to: "/admin/temporadas" as const,
+    icon: CalendarRange,
+    titulo: "Temporadas",
+    descricao: "Abrir e encerrar temporadas.",
+  },
+  {
     to: "/admin/jogadores" as const,
     icon: Users,
     titulo: "Gerenciar jogadores",
-    descricao: "Cadastrar, ativar e desativar.",
+    descricao: "Cadastrar, ativar e vincular convidados.",
   },
   {
     to: "/pelada" as const,

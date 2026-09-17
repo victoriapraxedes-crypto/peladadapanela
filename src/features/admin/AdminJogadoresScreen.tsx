@@ -5,6 +5,14 @@ import { toast } from "sonner";
 import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -51,6 +59,14 @@ interface PlayerRow {
   foto_url: string | null;
   posicao_principal: Posicao | null;
   ativo: boolean;
+  profile_id: string | null;
+}
+
+interface ContaSemVinculo {
+  id: string;
+  nome: string;
+  email: string | null;
+  temPlayer: boolean;
 }
 
 export function AdminJogadoresScreen() {
@@ -59,6 +75,10 @@ export function AdminJogadoresScreen() {
   const [aberto, setAberto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [contas, setContas] = useState<ContaSemVinculo[]>([]);
+  const [vincularAlvo, setVincularAlvo] = useState<PlayerRow | null>(null);
+  const [contaEscolhida, setContaEscolhida] = useState("");
+  const [vinculando, setVinculando] = useState(false);
 
   const [nome, setNome] = useState("");
   const [apelido, setApelido] = useState("");
@@ -67,11 +87,24 @@ export function AdminJogadoresScreen() {
   const [numero, setNumero] = useState("");
 
   const carregar = useCallback(async () => {
-    const { data } = await supabase
-      .from("players")
-      .select("id, nome, apelido, foto_url, posicao_principal, ativo")
-      .order("apelido", { ascending: true });
-    setPlayers(data ?? []);
+    const [{ data }, { data: perfis }] = await Promise.all([
+      supabase
+        .from("players")
+        .select("id, nome, apelido, foto_url, posicao_principal, ativo, profile_id")
+        .order("apelido", { ascending: true }),
+      supabase.from("profiles").select("id, nome, email").order("nome", { ascending: true }),
+    ]);
+    const lista = data ?? [];
+    setPlayers(lista);
+    const comPlayer = new Set(lista.map((p) => p.profile_id).filter(Boolean));
+    setContas(
+      (perfis ?? []).map((c) => ({
+        id: c.id,
+        nome: c.nome || c.email || "Sem nome",
+        email: c.email,
+        temPlayer: comPlayer.has(c.id),
+      })),
+    );
   }, []);
 
   useEffect(() => {
@@ -93,7 +126,25 @@ export function AdminJogadoresScreen() {
     setNumero("");
   };
 
-  const valido = nome.trim() !== "" && apelido.trim() !== "" && posicao !== null;
+  const valido = nome.trim() !== "" && apelido.trim() !== "";
+
+  const vincular = async () => {
+    if (!vincularAlvo || !contaEscolhida || vinculando) return;
+    setVinculando(true);
+    const { error } = await supabase.rpc("vincular_convidado", {
+      p_convidado_id: vincularAlvo.id,
+      p_profile_id: contaEscolhida,
+    });
+    setVinculando(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${vincularAlvo.apelido} agora está ligado à conta. Nada foi somado em dobro.`);
+    setVincularAlvo(null);
+    setContaEscolhida("");
+    await carregar();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +251,9 @@ export function AdminJogadoresScreen() {
             </div>
 
             <div className="grid gap-2">
-              <span className="text-sm font-medium text-foreground">Posição principal</span>
+              <span className="text-sm font-medium text-foreground">
+                Posição principal (opcional)
+              </span>
               <div className="grid grid-cols-2 gap-3">
                 {POSICOES.map((p) => (
                   <button
@@ -307,6 +360,18 @@ export function AdminJogadoresScreen() {
                 <span className="min-w-0">
                   <span className="block truncate text-sm text-foreground">{p.apelido}</span>
                   <span className="block truncate text-xs text-muted-foreground">{p.nome}</span>
+                  {p.profile_id === null && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVincularAlvo(p);
+                        setContaEscolhida("");
+                      }}
+                      className="mt-1 text-xs font-medium text-azul underline-offset-2 hover:underline"
+                    >
+                      Convidado · vincular a uma conta
+                    </button>
+                  )}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {p.posicao_principal ? POSICAO_ABREV[p.posicao_principal] : "—"}
@@ -326,6 +391,59 @@ export function AdminJogadoresScreen() {
           </ul>
         )}
       </section>
+
+      <Dialog
+        open={vincularAlvo !== null}
+        onOpenChange={(abertoDialog) => {
+          if (!abertoDialog) setVincularAlvo(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vincular {vincularAlvo?.apelido} a uma conta</DialogTitle>
+            <DialogDescription>
+              O histórico do convidado passa para a conta escolhida. Se a pessoa já tinha criado o
+              perfil dela, os dois cadastros viram um só, sem somar nada em dobro. Se os dois
+              aparecem na mesma pelada, o app recusa e avisa.
+            </DialogDescription>
+          </DialogHeader>
+          <label htmlFor="conta-vinculo" className="text-sm font-medium text-foreground">
+            Conta
+          </label>
+          <select
+            id="conta-vinculo"
+            value={contaEscolhida}
+            onChange={(e) => setContaEscolhida(e.target.value)}
+            className={INPUT}
+          >
+            <option value="">Escolha a conta</option>
+            {contas.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome}
+                {c.email ? ` (${c.email})` : ""}
+                {c.temPlayer ? " · já tem perfil" : ""}
+              </option>
+            ))}
+          </select>
+          <DialogFooter className="gap-2">
+            <button
+              type="button"
+              onClick={() => setVincularAlvo(null)}
+              className="flex h-[48px] items-center justify-center rounded-xl border border-border px-4 text-sm text-foreground"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              disabled={!contaEscolhida || vinculando}
+              onClick={() => void vincular()}
+              className="flex h-[48px] items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {vinculando ? "Vinculando..." : "Vincular"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

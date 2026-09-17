@@ -295,10 +295,7 @@ export function AdminSumulaScreen() {
       // Prioridade: a pelada em rascunho mais recente que já aconteceu.
       const jaJogadas = rascunhos.filter((p) => p.data <= hoje);
       const alvo =
-        jaJogadas[0] ??
-        escolherPeladaAtual([...rascunhos].reverse(), hoje) ??
-        lista[0] ??
-        null;
+        jaJogadas[0] ?? escolherPeladaAtual([...rascunhos].reverse(), hoje) ?? lista[0] ?? null;
       setPeladaId(alvo?.id ?? null);
       if (alvo) await carregarPelada(alvo.id);
       if (ativo) setLoading(false);
@@ -540,9 +537,7 @@ export function AdminSumulaScreen() {
         </div>
         <div>
           <p className="num text-xl text-destructive">{formatPontos(PONTOS.carrinho)}</p>
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-            por carrinho
-          </p>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">por carrinho</p>
         </div>
       </section>
 
@@ -657,8 +652,7 @@ export function AdminSumulaScreen() {
             <section className="mt-5 rounded-2xl border border-destructive/40 bg-surface p-5">
               <p className={SECTION_LABEL}>Ocorrências disciplinares</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Visível só para admins. O jogador vê apenas o motivo e o prazo da própria
-                suspensão.
+                Visível só para admins. O jogador vê apenas o motivo e o prazo da própria suspensão.
               </p>
               <ul className="mt-3 grid gap-3">
                 {ocorrencias.map((o) => (
@@ -756,8 +750,7 @@ export function AdminSumulaScreen() {
                   return (
                     <li key={a.id} className="border-b border-border pb-2 text-xs last:border-b-0">
                       <p className="text-foreground">
-                        <span className="font-medium">{nome}</span>{" "}
-                        {ACAO_LABEL[a.acao] ?? a.acao}
+                        <span className="font-medium">{nome}</span> {ACAO_LABEL[a.acao] ?? a.acao}
                         {a.playerId && a.entidade !== "resultado"
                           ? ` · ${apelidoDe(a.playerId)}`
                           : ""}
@@ -781,8 +774,8 @@ export function AdminSumulaScreen() {
           <DialogHeader>
             <DialogTitle>Publicar o resultado?</DialogTitle>
             <DialogDescription>
-              Os números entram no ranking e no painel dos jogadores, a pelada vai para o
-              histórico e a votação do MVP abre. Depois disso, cada correção pede um motivo.
+              Os números entram no ranking e no painel dos jogadores, a pelada vai para o histórico
+              e a votação do MVP abre. Depois disso, cada correção pede um motivo.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">

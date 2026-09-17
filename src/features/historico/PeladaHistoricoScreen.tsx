@@ -5,6 +5,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { InitialsAvatar } from "@/components/layout/Avatar";
+import { ResultadoIndividual } from "@/features/historico/ResultadoIndividual";
 import { StatusBadge } from "@/features/pelada/StatusBadge";
 import { posicaoLabel } from "@/features/jogadores/labels";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +13,10 @@ import { formatDataPorExtenso } from "@/lib/format";
 import type { Database, Tables } from "@/integrations/supabase/types";
 
 type Posicao = Database["public"]["Enums"]["posicao"];
-type PeladaRow = Pick<Tables<"peladas">, "id" | "data" | "horario" | "local" | "status">;
+type PeladaRow = Pick<
+  Tables<"peladas">,
+  "id" | "data" | "horario" | "local" | "status" | "resultado"
+>;
 
 interface Presente {
   id: string;
@@ -48,10 +52,6 @@ interface EventoRow {
   assistApelido: string | null;
 }
 
-function nomes(lista: string[]) {
-  return lista.join(" e ");
-}
-
 export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
   const [loading, setLoading] = useState(true);
   const [pelada, setPelada] = useState<PeladaRow | null>(null);
@@ -71,7 +71,7 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
 
       const peladaRes = await supabase
         .from("peladas")
-        .select("id, data, horario, local, status")
+        .select("id, data, horario, local, status, resultado")
         .eq("id", peladaId)
         .maybeSingle();
 
@@ -196,35 +196,6 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
 
   const nomeTime = useMemo(() => new Map(times.map((t) => [t.id, t.nome])), [times]);
 
-  const artilheiros = useMemo(() => {
-    const contagem = new Map<string, number>();
-    eventos
-      .filter((e) => e.tipo === "gol")
-      .forEach((e) => contagem.set(e.autorApelido, (contagem.get(e.autorApelido) ?? 0) + 1));
-    const max = Math.max(0, ...contagem.values());
-    if (max === 0) return { nomes: [] as string[], total: 0 };
-    return {
-      nomes: [...contagem.entries()].filter(([, v]) => v === max).map(([k]) => k),
-      total: max,
-    };
-  }, [eventos]);
-
-  const assistentes = useMemo(() => {
-    const contagem = new Map<string, number>();
-    eventos.forEach((e) => {
-      if (!e.assistApelido) return;
-      contagem.set(e.assistApelido, (contagem.get(e.assistApelido) ?? 0) + 1);
-    });
-    const max = Math.max(0, ...contagem.values());
-    if (max === 0) return { nomes: [] as string[], total: 0 };
-    return {
-      nomes: [...contagem.entries()].filter(([, v]) => v === max).map(([k]) => k),
-      total: max,
-    };
-  }, [eventos]);
-
-  const temGol = eventos.some((e) => e.tipo === "gol");
-
   if (erro) {
     return (
       <>
@@ -271,7 +242,7 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
       <TopBar />
 
       <header className="pt-2">
-        <h1 className="font-display text-2xl font-bold tracking-[-0.02em] text-foreground">
+        <h1 className="font-display text-2xl font-bold tracking-[-0.02em] text-foreground md:text-3xl">
           {formatDataPorExtenso(pelada.data)}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -279,56 +250,13 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
         </p>
       </header>
 
-      <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
-        <p className="font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary">
-          Resumo da noite
-        </p>
-
-        {temGol ? (
-          <div className="mt-4 grid gap-4">
-            <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
-              <InitialsAvatar apelido={artilheiros.nomes[0] ?? "?"} size={36} />
-              <span className="min-w-0">
-                <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Artilheiro da noite
-                </span>
-                <span className="block truncate text-sm text-foreground">
-                  {nomes(artilheiros.nomes)}
-                </span>
-              </span>
-              <span className="num text-2xl text-foreground">{artilheiros.total}</span>
-            </div>
-
-            {assistentes.nomes.length > 0 && (
-              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
-                <InitialsAvatar apelido={assistentes.nomes[0] ?? "?"} size={36} />
-                <span className="min-w-0">
-                  <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Líder de assistências
-                  </span>
-                  <span className="block truncate text-sm text-foreground">
-                    {nomes(assistentes.nomes)}
-                  </span>
-                </span>
-                <span className="num text-2xl text-foreground">{assistentes.total}</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-muted-foreground">Nenhum gol registrado nesta pelada.</p>
-        )}
-
-        <div className="mt-4 border-t border-border pt-4">
-          <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
-            MVP da galera
-          </span>
-          {mvps.length > 0 ? (
-            <span className="mt-1 block text-sm text-foreground">{nomes(mvps)}</span>
-          ) : (
-            <span className="mt-1 block text-sm text-muted-foreground">Sem votação.</span>
-          )}
-        </div>
-      </section>
+      <ResultadoIndividual
+        peladaId={pelada.id}
+        data={pelada.data}
+        local={pelada.local}
+        publicado={pelada.resultado === "publicado"}
+        mvps={mvps}
+      />
 
       <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
         <div className="flex items-baseline gap-2">
@@ -379,64 +307,62 @@ export function PeladaHistoricoScreen({ peladaId }: { peladaId: string }) {
         )}
       </section>
 
-      <section className="mt-5">
-        <h2 className="font-display text-base font-semibold text-foreground">Partidas</h2>
-        {partidas.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Nenhuma partida registrada nesta pelada.
-          </p>
-        ) : (
-          <div className="mt-3 grid gap-3">
-            {partidas.map((m) => {
-              const doJogo = eventos.filter((e) => e.match_id === m.id);
-              return (
-                <div key={m.id} className="rounded-2xl border border-border bg-surface p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm text-foreground">
-                        {nomeTime.get(m.team_a_id) ?? "Time A"} x{" "}
-                        {nomeTime.get(m.team_b_id) ?? "Time B"}
-                      </p>
-                      <div className="mt-1">
-                        <StatusBadge status={m.status} />
+      {partidas.length > 0 && (
+        <section className="mt-5">
+          <h2 className="font-display text-base font-semibold text-foreground">Partidas</h2>
+          {
+            <div className="mt-3 grid gap-3">
+              {partidas.map((m) => {
+                const doJogo = eventos.filter((e) => e.match_id === m.id);
+                return (
+                  <div key={m.id} className="rounded-2xl border border-border bg-surface p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-foreground">
+                          {nomeTime.get(m.team_a_id) ?? "Time A"} x{" "}
+                          {nomeTime.get(m.team_b_id) ?? "Time B"}
+                        </p>
+                        <div className="mt-1">
+                          <StatusBadge status={m.status} />
+                        </div>
                       </div>
+                      <span className="num shrink-0 text-3xl text-foreground">
+                        {m.placar_a} - {m.placar_b}
+                      </span>
                     </div>
-                    <span className="num shrink-0 text-3xl text-foreground">
-                      {m.placar_a} - {m.placar_b}
-                    </span>
-                  </div>
 
-                  {doJogo.length === 0 ? (
-                    <p className="mt-4 text-sm text-muted-foreground">Sem gols.</p>
-                  ) : (
-                    <ul className="mt-4 grid gap-3">
-                      {doJogo.map((e) => (
-                        <li key={e.id}>
-                          <p className="text-sm text-foreground">
-                            {e.tipo === "gol"
-                              ? `⚽ ${e.autorApelido}`
-                              : `⚽ Gol contra — ${e.autorApelido}`}
-                          </p>
-                          {e.tipo === "gol" ? (
-                            <p className="text-xs text-muted-foreground">
-                              {e.assistApelido ? `Assistência: ${e.assistApelido} · ` : ""}
-                              {nomeTime.get(e.team_id) ?? "Time"}
+                    {doJogo.length === 0 ? (
+                      <p className="mt-4 text-sm text-muted-foreground">Sem gols.</p>
+                    ) : (
+                      <ul className="mt-4 grid gap-3">
+                        {doJogo.map((e) => (
+                          <li key={e.id}>
+                            <p className="text-sm text-foreground">
+                              {e.tipo === "gol"
+                                ? `⚽ ${e.autorApelido}`
+                                : `⚽ Gol contra — ${e.autorApelido}`}
                             </p>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">
-                              Ponto para {nomeTime.get(e.team_id) ?? "Time"}
-                            </p>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                            {e.tipo === "gol" ? (
+                              <p className="text-xs text-muted-foreground">
+                                {e.assistApelido ? `Assistência: ${e.assistApelido} · ` : ""}
+                                {nomeTime.get(e.team_id) ?? "Time"}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">
+                                Ponto para {nomeTime.get(e.team_id) ?? "Time"}
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          }
+        </section>
+      )}
     </>
   );
 }

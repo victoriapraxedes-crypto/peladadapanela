@@ -24,6 +24,7 @@ import { Route as AdminAcessosRouteImport } from './routes/admin.acessos'
 import { Route as AdminJogadoresRouteImport } from './routes/admin.jogadores'
 import { Route as AdminPeladaRouteImport } from './routes/admin.pelada'
 import { Route as AdminSumulaRouteImport } from './routes/admin.sumula'
+import { Route as AdminTemporadasRouteImport } from './routes/admin.temporadas'
 import { Route as AdminTimesRouteImport } from './routes/admin.times'
 import { Route as HistoricoIndexRouteImport } from './routes/historico.index'
 import { Route as HistoricoPeladaIdRouteImport } from './routes/historico.$peladaId'
@@ -108,6 +109,11 @@ const AdminSumulaRoute = AdminSumulaRouteImport.update({
   path: '/admin/sumula',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminTemporadasRoute = AdminTemporadasRouteImport.update({
+  id: '/admin/temporadas',
+  path: '/admin/temporadas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminTimesRoute = AdminTimesRouteImport.update({
   id: '/admin/times',
   path: '/admin/times',
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/sumula': typeof AdminSumulaRoute
+  '/admin/temporadas': typeof AdminTemporadasRoute
   '/admin/times': typeof AdminTimesRoute
   '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/sumula': typeof AdminSumulaRoute
+  '/admin/temporadas': typeof AdminTemporadasRoute
   '/admin/times': typeof AdminTimesRoute
   '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/admin/jogadores': typeof AdminJogadoresRoute
   '/admin/pelada': typeof AdminPeladaRoute
   '/admin/sumula': typeof AdminSumulaRoute
+  '/admin/temporadas': typeof AdminTemporadasRoute
   '/admin/times': typeof AdminTimesRoute
   '/historico/$peladaId': typeof HistoricoPeladaIdRoute
   '/jogadores/$id': typeof JogadoresIdRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/sumula'
+    | '/admin/temporadas'
     | '/admin/times'
     | '/historico/$peladaId'
     | '/jogadores/$id'
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/sumula'
+    | '/admin/temporadas'
     | '/admin/times'
     | '/historico/$peladaId'
     | '/jogadores/$id'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/jogadores'
     | '/admin/pelada'
     | '/admin/sumula'
+    | '/admin/temporadas'
     | '/admin/times'
     | '/historico/$peladaId'
     | '/jogadores/$id'
@@ -307,6 +319,7 @@ export interface RootRouteChildren {
   AdminJogadoresRoute: typeof AdminJogadoresRoute
   AdminPeladaRoute: typeof AdminPeladaRoute
   AdminSumulaRoute: typeof AdminSumulaRoute
+  AdminTemporadasRoute: typeof AdminTemporadasRoute
   AdminTimesRoute: typeof AdminTimesRoute
   HistoricoPeladaIdRoute: typeof HistoricoPeladaIdRoute
   JogadoresIdRoute: typeof JogadoresIdRoute
@@ -424,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSumulaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/temporadas': {
+      id: '/admin/temporadas'
+      path: '/admin/temporadas'
+      fullPath: '/admin/temporadas'
+      preLoaderRoute: typeof AdminTemporadasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/times': {
       id: '/admin/times'
       path: '/admin/times'
@@ -492,6 +512,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminJogadoresRoute: AdminJogadoresRoute,
   AdminPeladaRoute: AdminPeladaRoute,
   AdminSumulaRoute: AdminSumulaRoute,
+  AdminTemporadasRoute: AdminTemporadasRoute,
   AdminTimesRoute: AdminTimesRoute,
   HistoricoPeladaIdRoute: HistoricoPeladaIdRoute,
   JogadoresIdRoute: JogadoresIdRoute,

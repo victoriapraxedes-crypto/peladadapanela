@@ -378,7 +378,10 @@ export function PeladaScreen() {
       <TopBar />
 
       {isAdmin && abertas.length > 1 && (
-        <nav aria-label="Peladas em aberto" className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1">
+        <nav
+          aria-label="Peladas em aberto"
+          className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1"
+        >
           {abertas.map((p) => (
             <button
               key={p.id}
@@ -470,7 +473,10 @@ export function PeladaScreen() {
             <section className="rounded-2xl border border-border bg-surface p-5">
               <p className={SECTION_LABEL}>Adicionar à escalação</p>
 
-              <form onSubmit={adicionarConvidado} className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <form
+                onSubmit={adicionarConvidado}
+                className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2"
+              >
                 <label htmlFor="novo-convidado" className="sr-only">
                   Nome ou apelido do convidado
                 </label>
@@ -555,7 +561,9 @@ export function PeladaScreen() {
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {times.map((t) => (
                   <div key={t.id} className="rounded-2xl border border-border bg-surface p-5">
-                    <h3 className="font-display text-base font-semibold text-foreground">{t.nome}</h3>
+                    <h3 className="font-display text-base font-semibold text-foreground">
+                      {t.nome}
+                    </h3>
                     <ul className="mt-2 grid gap-1">
                       {t.jogadores.map((apelido) => (
                         <li key={apelido} className="truncate text-sm text-muted-foreground">

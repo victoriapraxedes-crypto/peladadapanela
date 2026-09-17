@@ -3,7 +3,7 @@
 @import "tw-animate-css";
 
 /*
- * Pelada da Panela — tema único dark (charcoal + burnt orange).
+ * Pelada da Panela: tema único escuro em azul-marinho, amarelo e branco.
  * Todas as cores são tokens semânticos em HSL. Não usar cor hardcoded em componentes.
  */
 
@@ -42,54 +42,61 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-azul: hsl(var(--azul));
+  --color-azul-foreground: hsl(var(--azul-foreground));
 }
 
 :root {
   --radius: 1rem;
 
-  /* charcoal #111111 */
-  --background: 0 0% 6.7%;
-  /* warm off white #F5F2EB */
-  --foreground: 42 33% 94%;
+  /* Identidade: azul-marinho de fundo, amarelo de destaque, branco no texto. */
+  /* navy #07142E */
+  --background: 222 74% 10%;
+  /* branco #FFFFFF */
+  --foreground: 0 0% 100%;
 
-  /* surface #1A1A1A */
-  --surface: 0 0% 10.2%;
-  /* surface-2 #222222 */
-  --surface-2: 0 0% 13.3%;
+  /* surface #0D1F45 */
+  --surface: 221 68% 16%;
+  /* surface-2 #132A5A */
+  --surface-2: 221 65% 22%;
 
-  --card: 0 0% 10.2%;
-  --card-foreground: 42 33% 94%;
-  --popover: 0 0% 10.2%;
-  --popover-foreground: 42 33% 94%;
+  --card: 221 68% 16%;
+  --card-foreground: 0 0% 100%;
+  --popover: 221 68% 16%;
+  --popover-foreground: 0 0% 100%;
 
-  /* burnt orange #FF7A2F */
-  --primary: 22 100% 59%;
-  --primary-foreground: 0 0% 6.7%;
-  /* orange dim #E8621A */
-  --primary-dim: 21 81% 51%;
+  /* amarelo #FFD21F */
+  --primary: 48 100% 56%;
+  --primary-foreground: 222 74% 10%;
+  /* amarelo escuro #F2BF00 */
+  --primary-dim: 47 100% 47%;
 
-  --secondary: 0 0% 13.3%;
-  --secondary-foreground: 42 33% 94%;
+  /* azul vivo #2F7BFF: apoio, links, dados secundários */
+  --azul: 218 100% 59%;
+  --azul-foreground: 0 0% 100%;
 
-  --muted: 0 0% 13.3%;
-  /* muted foreground #A3A099 */
-  --muted-foreground: 45 4% 62%;
+  --secondary: 221 65% 22%;
+  --secondary-foreground: 0 0% 100%;
 
-  --accent: 0 0% 13.3%;
-  --accent-foreground: 42 33% 94%;
+  --muted: 221 65% 22%;
+  /* muted foreground #A9BADF */
+  --muted-foreground: 221 47% 77%;
 
-  /* danger #EF4444 */
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 42 33% 94%;
+  --accent: 221 65% 22%;
+  --accent-foreground: 0 0% 100%;
+
+  /* danger #F05252 */
+  --destructive: 0 84% 63%;
+  --destructive-foreground: 0 0% 100%;
   /* success #22C55E */
   --success: 142 71% 45%;
-  /* warning #FACC15 */
-  --warning: 50 96% 53%;
+  /* warning laranja #FB923C (o amarelo agora é a marca) */
+  --warning: 27 96% 61%;
 
-  /* border #2A2A2A */
-  --border: 0 0% 16.5%;
-  --input: 0 0% 16.5%;
-  --ring: 22 100% 59%;
+  /* border #1E3A73 */
+  --border: 220 59% 28%;
+  --input: 220 59% 28%;
+  --ring: 48 100% 56%;
 }
 
 @utility num {
@@ -107,6 +114,10 @@
   html,
   body {
     background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(90rem 40rem at 50% -12rem, hsl(var(--azul) / 0.35), transparent 70%),
+      linear-gradient(hsl(var(--background)), hsl(var(--background)));
+    background-attachment: fixed;
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -119,5 +130,45 @@
       color 150ms ease,
       border-color 150ms ease,
       opacity 150ms ease;
+  }
+}
+
+/* Entrada discreta de cards e números; some para quem prefere menos movimento. */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes crescer {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@utility animar-surgir {
+  animation: surgir 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@utility animar-crescer {
+  transform-origin: bottom;
+  animation: crescer 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

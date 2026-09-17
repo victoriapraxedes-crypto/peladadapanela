@@ -4,6 +4,12 @@ import { Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  buscarDesempenhos,
+  buscarJogadores,
+  calcularDestaques,
+  nomesDe,
+} from "@/features/desempenho/dados";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDataPorExtenso } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -13,8 +19,10 @@ interface ItemHistorico {
   id: string;
   data: string;
   local: string;
-  partidas: number;
+  publicado: boolean;
+  jogadores: number;
   gols: number;
+  artilheiro: string | null;
   mvps: string[];
 }
 
@@ -26,103 +34,56 @@ export function HistoricoScreen() {
 
   useEffect(() => {
     let ativo = true;
-    async function load() {
+    (async () => {
       setLoading(true);
       setErro(false);
+      try {
+        const [peladasRes, desempenhos, jogadores, mvpsRes] = await Promise.all([
+          supabase
+            .from("peladas")
+            .select("id, data, local, resultado")
+            .eq("status", "finalizada")
+            .order("data", { ascending: false }),
+          buscarDesempenhos({}),
+          buscarJogadores(),
+          supabase.from("mvp_winners").select("pelada_id, player_id"),
+        ]);
+        if (peladasRes.error) throw peladasRes.error;
+        if (!ativo) return;
 
-      // 1) peladas finalizadas
-      const { data: peladas, error: peladasErr } = await supabase
-        .from("peladas")
-        .select("id, data, local")
-        .eq("status", "finalizada")
-        .order("data", { ascending: false });
-
-      if (!ativo) return;
-      if (peladasErr) {
-        setErro(true);
-        setLoading(false);
-        return;
-      }
-      const lista = peladas ?? [];
-      if (lista.length === 0) {
-        setItens([]);
-        setLoading(false);
-        return;
-      }
-      const peladaIds = lista.map((p) => p.id);
-
-      // 2) partidas dessas peladas
-      const { data: matches, error: matchesErr } = await supabase
-        .from("matches")
-        .select("id, pelada_id")
-        .in("pelada_id", peladaIds);
-      if (matchesErr) {
-        if (ativo) {
-          setErro(true);
-          setLoading(false);
+        const porPelada = new Map<string, typeof desempenhos>();
+        for (const d of desempenhos) {
+          porPelada.set(d.peladaId, [...(porPelada.get(d.peladaId) ?? []), d]);
         }
-        return;
+        const mvps = new Map<string, string[]>();
+        for (const m of mvpsRes.data ?? []) {
+          if (!m.pelada_id || !m.player_id) continue;
+          const apelido = jogadores.get(m.player_id)?.apelido;
+          if (apelido) mvps.set(m.pelada_id, [...(mvps.get(m.pelada_id) ?? []), apelido]);
+        }
+
+        setItens(
+          (peladasRes.data ?? []).map((p) => {
+            const linhas = porPelada.get(p.id) ?? [];
+            const art = calcularDestaques(linhas).find((d) => d.titulo === "Artilheiro");
+            return {
+              id: p.id,
+              data: p.data,
+              local: p.local,
+              publicado: p.resultado === "publicado",
+              jogadores: linhas.length,
+              gols: linhas.reduce((s, l) => s + l.gols, 0),
+              artilheiro: art ? `${nomesDe(art.playerIds, jogadores)} (${art.valor})` : null,
+              mvps: mvps.get(p.id) ?? [],
+            };
+          }),
+        );
+      } catch {
+        if (ativo) setErro(true);
+      } finally {
+        if (ativo) setLoading(false);
       }
-      const partidas = matches ?? [];
-      const matchIds = partidas.map((m) => m.id);
-
-      // 3) eventos dessas partidas
-      const eventosRes = matchIds.length
-        ? await supabase.from("match_events").select("match_id").in("match_id", matchIds)
-        : { data: [] as { match_id: string }[] };
-
-      // 4) MVPs
-      const { data: mvps } = await supabase
-        .from("mvp_winners")
-        .select("pelada_id, player_id")
-        .in("pelada_id", peladaIds);
-
-      // 5) apelidos dos MVPs
-      const mvpPlayerIds = Array.from(
-        new Set((mvps ?? []).map((m) => m.player_id).filter((v): v is string => !!v)),
-      );
-      const playersRes = mvpPlayerIds.length
-        ? await supabase.from("players").select("id, apelido").in("id", mvpPlayerIds)
-        : { data: [] as { id: string; apelido: string }[] };
-
-      if (!ativo) return;
-
-      const apelidoPorId = new Map((playersRes.data ?? []).map((p) => [p.id, p.apelido]));
-      const peladaPorMatch = new Map(partidas.map((m) => [m.id, m.pelada_id]));
-
-      const partidasPorPelada = new Map<string, number>();
-      partidas.forEach((m) => {
-        partidasPorPelada.set(m.pelada_id, (partidasPorPelada.get(m.pelada_id) ?? 0) + 1);
-      });
-
-      const golsPorPelada = new Map<string, number>();
-      (eventosRes.data ?? []).forEach((e) => {
-        const pid = peladaPorMatch.get(e.match_id);
-        if (!pid) return;
-        golsPorPelada.set(pid, (golsPorPelada.get(pid) ?? 0) + 1);
-      });
-
-      const mvpsPorPelada = new Map<string, string[]>();
-      (mvps ?? []).forEach((m) => {
-        if (!m.pelada_id || !m.player_id) return;
-        const apelido = apelidoPorId.get(m.player_id);
-        if (!apelido) return;
-        mvpsPorPelada.set(m.pelada_id, [...(mvpsPorPelada.get(m.pelada_id) ?? []), apelido]);
-      });
-
-      setItens(
-        lista.map((p) => ({
-          id: p.id,
-          data: p.data,
-          local: p.local,
-          partidas: partidasPorPelada.get(p.id) ?? 0,
-          gols: golsPorPelada.get(p.id) ?? 0,
-          mvps: mvpsPorPelada.get(p.id) ?? [],
-        })),
-      );
-      setLoading(false);
-    }
-    void load();
+    })();
     return () => {
       ativo = false;
     };
@@ -133,9 +94,10 @@ export function HistoricoScreen() {
       <TopBar />
 
       <header className="pt-2">
-        <h1 className="font-display text-2xl font-bold tracking-[-0.02em] text-foreground">
+        <h1 className="font-display text-2xl font-bold tracking-[-0.02em] text-foreground md:text-3xl">
           Histórico
         </h1>
+        <p className="mt-1 text-sm text-muted-foreground">Todas as peladas encerradas.</p>
       </header>
 
       {erro ? (
@@ -143,27 +105,27 @@ export function HistoricoScreen() {
           <ErroCarregamento onRetry={() => setTentativa((t) => t + 1)} />
         </div>
       ) : loading ? (
-        <div className="mt-5 grid gap-3">
-          {[0, 1, 2].map((i) => (
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-[136px] rounded-2xl" />
           ))}
         </div>
       ) : itens.length === 0 ? (
         <div className="mt-8">
-          <p className="text-sm text-foreground">Nenhuma pelada finalizada ainda.</p>
+          <p className="text-sm text-foreground">Nenhuma pelada encerrada ainda.</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Uma pelada entra no histórico quando o admin muda o status dela para finalizada.
+            Uma pelada entra no histórico quando o resultado é publicado na súmula.
           </p>
         </div>
       ) : (
-        <div className="mt-5 grid gap-3">
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
           {itens.map((item) => (
             <Link
               key={item.id}
               to="/historico/$peladaId"
               params={{ peladaId: item.id }}
               className={cn(
-                "block rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary/40",
+                "animar-surgir block rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-primary/60",
                 FOCUS_RING,
               )}
             >
@@ -172,24 +134,38 @@ export function HistoricoScreen() {
               </p>
               <p className="mt-1 truncate text-xs text-muted-foreground">{item.local}</p>
 
-              <div className="mt-4 flex items-end gap-6">
-                <span className="grid">
-                  <span className="num text-base text-foreground">{item.partidas}</span>
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    partidas
+              {item.publicado ? (
+                <div className="mt-4 flex items-end gap-6">
+                  <span className="grid">
+                    <span className="num text-xl text-foreground">{item.jogadores}</span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      jogadores
+                    </span>
                   </span>
-                </span>
-                <span className="grid">
-                  <span className="num text-base text-foreground">{item.gols}</span>
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    gols
+                  <span className="grid">
+                    <span className="num text-xl text-primary">{item.gols}</span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      gols
+                    </span>
                   </span>
-                </span>
-              </div>
+                  {item.artilheiro && (
+                    <span className="grid min-w-0">
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {item.artilheiro}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        artilheiro
+                      </span>
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-4 text-xs text-muted-foreground">Encerrada sem resultado.</p>
+              )}
 
               {item.mvps.length > 0 && (
-                <span className="mt-4 inline-block rounded-full border border-primary/40 px-3 py-1 text-xs text-primary">
-                  MVP: {item.mvps.join(" e ")}
+                <span className="mt-4 inline-block rounded-full border border-azul/60 px-3 py-1 text-xs text-azul">
+                  MVP da galera: {item.mvps.join(" e ")}
                 </span>
               )}
             </Link>

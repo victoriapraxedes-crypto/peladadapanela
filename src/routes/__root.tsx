@@ -102,7 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "A pelada dos amigos, organizada de verdade." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#111111" },
+      { name: "theme-color", content: "#07142E" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },

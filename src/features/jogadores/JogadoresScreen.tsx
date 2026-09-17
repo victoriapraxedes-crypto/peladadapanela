@@ -10,6 +10,7 @@ import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { posicaoLabel } from "@/features/jogadores/labels";
+import { buscarRanking, type LinhaRanking } from "@/features/desempenho/dados";
 import { cn } from "@/lib/utils";
 import { FOCUS_RING } from "@/lib/ui";
 
@@ -17,7 +18,7 @@ type PlayerRow = Pick<
   Tables<"players">,
   "id" | "nome" | "apelido" | "foto_url" | "posicao_principal"
 >;
-type StatsRow = Tables<"player_stats">;
+type StatsRow = LinhaRanking;
 
 function normalizar(v: string): string {
   return v
@@ -47,17 +48,23 @@ export function JogadoresScreen() {
         .select("id, nome, apelido, foto_url, posicao_principal")
         .eq("ativo", true);
       const seasonRes = await supabase.from("seasons").select("id").eq("ativa", true).maybeSingle();
-      const statsRes = seasonRes.data
-        ? await supabase.from("player_stats").select("*").eq("season_id", seasonRes.data.id)
-        : null;
+      let ranking: LinhaRanking[] = [];
+      let falhou = false;
+      if (seasonRes.data) {
+        try {
+          ranking = await buscarRanking(seasonRes.data.id);
+        } catch {
+          falhou = true;
+        }
+      }
       if (!ativo) return;
-      if (playersRes.error || seasonRes.error || statsRes?.error) {
+      if (playersRes.error || seasonRes.error || falhou) {
         setErro(true);
         setLoading(false);
         return;
       }
       setPlayers(playersRes.data ?? []);
-      setStats(statsRes?.data ?? []);
+      setStats(ranking);
       setLoading(false);
     }
     void load();
@@ -67,7 +74,7 @@ export function JogadoresScreen() {
   }, [tentativa]);
 
   const lista = useMemo(() => {
-    const byId = new Map(stats.filter((s) => s.player_id).map((s) => [s.player_id!, s]));
+    const byId = new Map(stats.map((s) => [s.playerId, s]));
     const termo = normalizar(busca.trim());
     return [...players]
       .filter(
@@ -178,7 +185,7 @@ export function JogadoresScreen() {
                         [
                           ["Jogos", s?.jogos ?? 0],
                           ["Gols", s?.gols ?? 0],
-                          ["Assist", s?.assistencias ?? 0],
+                          ["Pts", s?.pontos ?? 0],
                         ] as const
                       ).map(([label, valor]) => (
                         <div key={label} className="flex w-9 flex-col items-center sm:w-10">

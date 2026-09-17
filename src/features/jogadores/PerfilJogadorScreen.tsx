@@ -4,34 +4,38 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { InitialsAvatar } from "@/components/layout/Avatar";
 import { TopBar } from "@/components/layout/TopBar";
 import { ErroCarregamento } from "@/components/layout/ErroCarregamento";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FOCUS_RING } from "@/lib/ui";
-import { formatDataPorExtenso } from "@/lib/format";
+import { formatDataPorExtenso, hojeLocalISO } from "@/lib/format";
+import { formatPontos } from "@/lib/pontuacao";
 import { PE_LABEL, POSICAO_LABEL, posicaoLabel } from "@/features/jogadores/labels";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { BotaoCompartilhar } from "@/features/compartilhar/BotaoCompartilhar";
+import { gerarCardJogador } from "@/features/compartilhar/cards";
+import {
+  AvisoSuspensao,
+  FotoJogador,
+  GraficoEvolucao,
+  SECTION_LABEL,
+  StatTile,
+  Variacao,
+} from "@/features/desempenho/componentes";
+import {
+  buscarDesempenhos,
+  buscarMinhaSuspensao,
+  buscarRanking,
+  buscarTemporadas,
+  type DesempenhoPelada,
+  type LinhaRanking,
+  type SuspensaoPropria,
+  type Temporada,
+} from "@/features/desempenho/dados";
 
 type PlayerRow = Tables<"players">;
-type StatsRow = Tables<"player_stats">;
-type PeladaRow = Pick<Tables<"peladas">, "id" | "data" | "local" | "status">;
 
-type Periodo = "temporada" | "geral";
-
-const n = (v: number | null | undefined) => v ?? 0;
-
-// Mesmos critérios de ordenação e elegibilidade usados no /ranking.
-function posicaoNoRanking(
-  rows: StatsRow[],
-  playerId: string,
-  elegivel: (r: StatsRow) => boolean,
-  cmp: (a: StatsRow, b: StatsRow) => number,
-): number | null {
-  const elegiveis = rows.filter(elegivel);
-  if (!elegiveis.some((r) => r.player_id === playerId)) return null;
-  const idx = [...elegiveis].sort(cmp).findIndex((r) => r.player_id === playerId);
-  return idx < 0 ? null : idx + 1;
-}
+const GERAL = "geral";
 
 interface PerfilJogadorScreenProps {
   playerId: string;
@@ -39,120 +43,92 @@ interface PerfilJogadorScreenProps {
 }
 
 export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenProps) {
+  const { player: eu } = useAuth();
+  const ehEu = eu?.id === playerId;
   const [player, setPlayer] = useState<PlayerRow | null>(null);
-  const [seasonId, setSeasonId] = useState<string | null>(null);
-  const [peladas, setPeladas] = useState<PeladaRow[]>([]);
-  const [stats, setStats] = useState<StatsRow[]>([]);
-  const [periodo, setPeriodo] = useState<Periodo>("temporada");
+  const [temporadas, setTemporadas] = useState<Temporada[]>([]);
+  const [escopo, setEscopo] = useState<string>(GERAL);
+  const [todas, setTodas] = useState<DesempenhoPelada[]>([]);
+  const [locais, setLocais] = useState<Map<string, string>>(new Map());
+  const [ranking, setRanking] = useState<LinhaRanking[]>([]);
+  const [mvps, setMvps] = useState(0);
+  const [suspensao, setSuspensao] = useState<SuspensaoPropria | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
   const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
-    async function load() {
+    (async () => {
       setLoading(true);
       setErro(false);
-      // 3 requisições: jogador, temporada ativa e peladas (join único).
-      const playerRes = await supabase.from("players").select("*").eq("id", playerId).maybeSingle();
-      const seasonRes = await supabase.from("seasons").select("id").eq("ativa", true).maybeSingle();
-      const peladasRes = await supabase
-        .from("pelada_players")
-        .select("peladas!inner(id, data, local, status)")
-        .eq("player_id", playerId)
-        .eq("peladas.status", "finalizada")
-        .order("data", { referencedTable: "peladas", ascending: false })
-        .limit(5);
-      if (!ativo) return;
-      if (playerRes.error || seasonRes.error || peladasRes.error) {
-        setErro(true);
-        setLoading(false);
-        return;
+      try {
+        const [playerRes, ts, desempenhos, mvpRes, susp] = await Promise.all([
+          supabase.from("players").select("*").eq("id", playerId).maybeSingle(),
+          buscarTemporadas(),
+          buscarDesempenhos({ playerId }),
+          supabase.from("mvp_winners").select("pelada_id").eq("player_id", playerId),
+          ehEu ? buscarMinhaSuspensao(playerId, hojeLocalISO()) : Promise.resolve(null),
+        ]);
+        if (playerRes.error) throw playerRes.error;
+        const ids = desempenhos.map((d) => d.peladaId);
+        const peladasRes = ids.length
+          ? await supabase.from("peladas").select("id, local").in("id", ids)
+          : { data: [] as { id: string; local: string }[] };
+        if (!ativo) return;
+        setPlayer(playerRes.data ?? null);
+        setTemporadas(ts);
+        setTodas(desempenhos);
+        setLocais(new Map((peladasRes.data ?? []).map((p) => [p.id, p.local])));
+        setMvps((mvpRes.data ?? []).length);
+        setSuspensao(susp);
+        setEscopo(ts.find((t) => t.ativa)?.id ?? GERAL);
+      } catch {
+        if (ativo) setErro(true);
+      } finally {
+        if (ativo) setLoading(false);
       }
-      setPlayer(playerRes.data ?? null);
-      setSeasonId(seasonRes.data?.id ?? null);
-      const linhas = (peladasRes.data ?? []) as unknown as { peladas: PeladaRow }[];
-      setPeladas(
-        linhas
-          .map((l) => l.peladas)
-          .filter(Boolean)
-          .sort((a, b) => b.data.localeCompare(a.data))
-          .slice(0, 5),
-      );
-      setLoading(false);
-    }
-    void load();
+    })();
     return () => {
       ativo = false;
     };
-  }, [playerId, tentativa]);
+  }, [playerId, ehEu, tentativa]);
 
   useEffect(() => {
     let ativo = true;
-    async function loadStats() {
-      // 1 requisição: a view inteira do período, cruzada em memória.
-      if (periodo === "temporada") {
-        if (!seasonId) {
-          if (ativo) setStats([]);
-          return;
-        }
-        const res = await supabase.from("player_stats").select("*").eq("season_id", seasonId);
-        if (!ativo) return;
-        if (res.error) {
-          setErro(true);
-          return;
-        }
-        setStats(res.data ?? []);
-      } else {
-        const res = await supabase.from("player_stats_alltime").select("*");
-        if (!ativo) return;
-        if (res.error) {
-          setErro(true);
-          return;
-        }
-        setStats((res.data as StatsRow[] | null) ?? []);
-      }
-    }
-    void loadStats();
+    buscarRanking(escopo === GERAL ? null : escopo)
+      .then((r) => {
+        if (ativo) setRanking(r);
+      })
+      .catch(() => {
+        if (ativo) setRanking([]);
+      });
     return () => {
       ativo = false;
     };
-  }, [periodo, seasonId, tentativa]);
+  }, [escopo]);
 
-  const minhas = useMemo(
-    () => stats.find((s) => s.player_id === playerId) ?? null,
-    [stats, playerId],
+  const doPeriodo = useMemo(
+    () => (escopo === GERAL ? todas : todas.filter((d) => d.seasonId === escopo)),
+    [todas, escopo],
   );
-
-  const posicoes = useMemo(() => {
-    const desc = (f: (r: StatsRow) => number) => (a: StatsRow, b: StatsRow) => f(b) - f(a);
-    return {
-      geral: posicaoNoRanking(
-        stats,
-        playerId,
-        (r) => n(r.jogos) > 0,
-        (a, b) =>
-          desc((r) => n(r.participacoes_em_gols))(a, b) ||
-          desc((r) => n(r.vitorias))(a, b) ||
-          desc((r) => n(r.gols))(a, b) ||
-          desc((r) => n(r.assistencias))(a, b),
+  const total = useMemo(
+    () =>
+      doPeriodo.reduce(
+        (acc, d) => ({
+          pontos: acc.pontos + d.pontos,
+          gols: acc.gols + d.gols,
+          assistencias: acc.assistencias + d.assistencias,
+          carrinhos: acc.carrinhos + d.carrinhos,
+        }),
+        { pontos: 0, gols: 0, assistencias: 0, carrinhos: 0 },
       ),
-      gols: posicaoNoRanking(
-        stats,
-        playerId,
-        (r) => n(r.gols) > 0,
-        (a, b) => desc((r) => n(r.gols))(a, b) || desc((r) => n(r.media_gols_por_jogo))(a, b),
-      ),
-      assistencias: posicaoNoRanking(
-        stats,
-        playerId,
-        (r) => n(r.assistencias) > 0,
-        (a, b) =>
-          desc((r) => n(r.assistencias))(a, b) ||
-          desc((r) => n(r.media_assistencias_por_jogo))(a, b),
-      ),
-    };
-  }, [stats, playerId]);
+    [doPeriodo],
+  );
+  const linha = ranking.find((r) => r.playerId === playerId) ?? null;
+  const melhor = doPeriodo.length ? Math.max(...doPeriodo.map((d) => d.pontos)) : null;
+  const nomePeriodo =
+    escopo === GERAL ? "Histórico geral" : (temporadas.find((t) => t.id === escopo)?.nome ?? "");
 
   if (erro) {
     return (
@@ -167,12 +143,7 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
     return (
       <div className="flex flex-col gap-5">
         <TopBar />
-        <div className="flex flex-col items-center gap-3">
-          <Skeleton className="h-24 w-24 rounded-full" />
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-4 w-40" />
-        </div>
-        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
         <Skeleton className="h-56 w-full rounded-2xl" />
       </div>
     );
@@ -199,146 +170,185 @@ export function PerfilJogadorScreen({ playerId, header }: PerfilJogadorScreenPro
   }
 
   const pilulas: { texto: string; suave?: boolean }[] = [
+    ...(player.profile_id ? [] : [{ texto: "Convidado" }]),
     { texto: posicaoLabel(player.posicao_principal) },
     { texto: PE_LABEL[player.pe_dominante] },
     ...(player.numero_preferido ? [{ texto: `#${player.numero_preferido}` }] : []),
     ...player.posicoes_secundarias.map((p) => ({ texto: POSICAO_LABEL[p], suave: true })),
   ];
 
-  const detalhes: [string, string][] = [
-    ["Vitórias", String(n(minhas?.vitorias))],
-    ["Empates", String(n(minhas?.empates))],
-    ["Derrotas", String(n(minhas?.derrotas))],
-    ["Aproveitamento", `${n(minhas?.aproveitamento)}%`],
-    ["Participações em gols", String(n(minhas?.participacoes_em_gols))],
-    ["Gols contra", String(n(minhas?.gols_contra))],
-    ["Média de gols por jogo", String(n(minhas?.media_gols_por_jogo))],
-    ["Média de assistências por jogo", String(n(minhas?.media_assistencias_por_jogo))],
-    ["MVPs", String(n(minhas?.mvps))],
-  ];
+  const recentes = [...doPeriodo].reverse();
 
   return (
     <div className="flex flex-col gap-5">
       <TopBar />
 
-      {/* Identidade */}
-      <div className="flex flex-col items-center gap-2">
-        {player.foto_url ? (
-          <img
-            src={player.foto_url}
-            alt={player.apelido}
-            className="h-24 w-24 rounded-full object-cover"
+      {suspensao && <AvisoSuspensao suspensao={suspensao} />}
+
+      <section className="animar-surgir overflow-hidden rounded-2xl border border-border bg-surface">
+        <div className="h-20 bg-gradient-to-br from-azul via-surface-2 to-primary/60" />
+        <div className="-mt-12 flex flex-col items-center gap-2 px-5 pb-5">
+          <FotoJogador
+            apelido={player.apelido}
+            fotoUrl={player.foto_url}
+            size={96}
+            className="rounded-full ring-4 ring-primary"
           />
-        ) : (
-          <InitialsAvatar apelido={player.apelido} size={96} />
-        )}
-        <h1 className="text-center font-display text-2xl font-bold">{player.apelido}</h1>
-        <p className="text-center text-sm text-muted-foreground">{player.nome}</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {pilulas.map((p) => (
-            <span
-              key={p.texto}
-              className={cn(
-                "rounded-full border border-border px-3 py-1 text-xs",
-                p.suave ? "text-muted-foreground" : "text-foreground",
-              )}
-            >
-              {p.texto}
-            </span>
-          ))}
+          <h1 className="text-center font-display text-2xl font-bold">{player.apelido}</h1>
+          <p className="text-center text-sm text-muted-foreground">{player.nome}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {pilulas.map((p) => (
+              <span
+                key={p.texto}
+                className={cn(
+                  "rounded-full border border-border px-3 py-1 text-xs",
+                  p.suave ? "text-muted-foreground" : "text-foreground",
+                )}
+              >
+                {p.texto}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
       {header}
 
-      {/* Destaque */}
-      <div className="grid grid-cols-3 gap-2 rounded-2xl border border-border bg-surface p-4 sm:p-5">
-        {(
-          [
-            ["Jogos", n(minhas?.jogos)],
-            ["Gols", n(minhas?.gols)],
-            ["Assistências", n(minhas?.assistencias)],
-          ] as const
-        ).map(([label, valor]) => (
-          <div key={label} className="flex min-w-0 flex-col items-center gap-1">
-            <span className="num text-3xl text-foreground">{valor}</span>
-            <span className="w-full truncate text-center text-[10px] uppercase tracking-wide text-muted-foreground">
-              {label}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Estatísticas */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
-        <div className="grid grid-cols-2 gap-2">
-          {(
-            [
-              ["temporada", "Temporada"],
-              ["geral", "Geral"],
-            ] as const
-          ).map(([id, label]) => (
+      <nav aria-label="Período" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        {[...temporadas.map((t) => ({ id: t.id, nome: t.nome })), { id: GERAL, nome: "Geral" }].map(
+          (t) => (
             <button
-              key={id}
+              key={t.id}
               type="button"
-              onClick={() => setPeriodo(id)}
+              aria-pressed={escopo === t.id}
+              onClick={() => setEscopo(t.id)}
               className={cn(
-                "flex min-h-[44px] items-center justify-center rounded-xl border text-sm font-medium transition-colors",
-                periodo === id
-                  ? "border-primary bg-surface-2 text-foreground"
-                  : "border-border bg-transparent text-muted-foreground hover:border-primary/40",
+                "shrink-0 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+                escopo === t.id
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:border-primary/40",
                 FOCUS_RING,
               )}
             >
-              {label}
+              {t.nome}
             </button>
-          ))}
-        </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-          {detalhes.map(([label, valor]) => (
-            <div key={label} className="flex flex-col">
-              <span className="num text-lg text-foreground">{valor}</span>
-              <span className="text-xs text-muted-foreground">{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+          ),
+        )}
+      </nav>
 
-      {/* Posições no ranking */}
-      <div className="rounded-2xl border border-border bg-surface px-5">
-        {(
-          [
-            ["Ranking geral", posicoes.geral],
-            ["Artilharia", posicoes.gols],
-            ["Assistências", posicoes.assistencias],
-          ] as const
-        ).map(([label, pos]) => (
-          <div
-            key={label}
-            className="flex min-h-[56px] items-center justify-between border-b border-border last:border-b-0"
-          >
-            <span className="text-sm text-foreground">{label}</span>
-            <span className="num text-lg text-primary">{pos ? `${pos}º` : "—"}</span>
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <section className="rounded-2xl border border-border bg-surface p-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className={SECTION_LABEL}>{nomePeriodo}</p>
+            <p className="flex items-center gap-1 text-sm text-foreground">
+              <span className="num text-2xl text-primary">{linha ? `${linha.posicao}º` : "–"}</span>
+              {linha && <Variacao valor={linha.variacao} />}
+            </p>
           </div>
-        ))}
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <StatTile
+              rotulo="Pontos"
+              valor={formatPontos(total.pontos)}
+              destaque
+              negativo={total.pontos < 0}
+            />
+            <StatTile rotulo="Jogos" valor={doPeriodo.length} />
+            <StatTile rotulo="Gols" valor={total.gols} />
+            <StatTile rotulo="Assistências" valor={total.assistencias} />
+            <StatTile rotulo="Carrinhos" valor={total.carrinhos} negativo={total.carrinhos > 0} />
+            <StatTile rotulo="MVPs da galera" valor={mvps} />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+            <p>
+              Média por pelada:{" "}
+              <span className="num text-sm text-foreground">
+                {doPeriodo.length ? (total.pontos / doPeriodo.length).toFixed(1) : "0"}
+              </span>
+            </p>
+            <p className="text-right">
+              Melhor pelada:{" "}
+              <span className="num text-sm text-foreground">
+                {melhor === null ? "–" : formatPontos(melhor)}
+              </span>
+            </p>
+          </div>
+          {doPeriodo.length > 0 && (
+            <BotaoCompartilhar
+              className="mt-4 w-full"
+              rotulo={ehEu ? "Compartilhar meu card" : "Compartilhar card"}
+              nomeArquivo={`pelada-${player.apelido.toLowerCase()}.png`}
+              titulo={`${player.apelido} na Pelada da Panela`}
+              texto={`${player.apelido}: ${total.pontos} pontos (${nomePeriodo})`}
+              gerar={() =>
+                gerarCardJogador({
+                  apelido: player.apelido,
+                  periodo: nomePeriodo,
+                  posicao: linha?.posicao ?? null,
+                  pontos: total.pontos,
+                  jogos: doPeriodo.length,
+                  gols: total.gols,
+                  assistencias: total.assistencias,
+                  carrinhos: total.carrinhos,
+                  evolucao: doPeriodo.map((d) => d.pontos),
+                  fotoUrl: player.foto_url,
+                })
+              }
+            />
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-border bg-surface p-5">
+          <p className={SECTION_LABEL}>Evolução por pelada</p>
+          <div className="mt-3">
+            <GraficoEvolucao pontos={doPeriodo.slice(-16)} altura={120} />
+          </div>
+        </section>
       </div>
 
-      {/* Peladas recentes */}
-      <div className="rounded-2xl border border-border bg-surface">
-        <h2 className="px-5 pt-5 font-display text-base font-semibold">Peladas recentes</h2>
-        {peladas.length === 0 ? (
-          <p className="p-5 text-sm text-muted-foreground">Nenhuma pelada registrada ainda.</p>
+      <section className="rounded-2xl border border-border bg-surface">
+        <h2 className="px-5 pt-5 font-display text-base font-semibold">Pelada a pelada</h2>
+        {recentes.length === 0 ? (
+          <p className="p-5 text-sm text-muted-foreground">
+            Nenhum resultado publicado neste período.
+          </p>
         ) : (
-          <ul className="px-5">
-            {peladas.map((p) => (
-              <li key={p.id} className="border-b border-border py-3 last:border-b-0">
-                <p className="text-sm text-foreground">{formatDataPorExtenso(p.data)}</p>
-                <p className="text-xs text-muted-foreground">{p.local}</p>
+          <ul className="px-5 pb-2">
+            {recentes.map((d) => (
+              <li key={d.peladaId} className="border-b border-border last:border-b-0">
+                <Link
+                  to="/historico/$peladaId"
+                  params={{ peladaId: d.peladaId }}
+                  className={cn(
+                    "grid min-h-[56px] grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 py-3",
+                    FOCUS_RING,
+                  )}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm text-foreground">
+                      {formatDataPorExtenso(d.data)}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {locais.get(d.peladaId) ?? ""}
+                    </span>
+                  </span>
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    {d.gols}G · {d.assistencias}A
+                    {d.carrinhos > 0 && <span className="text-destructive"> · {d.carrinhos}C</span>}
+                  </span>
+                  <span
+                    className={cn(
+                      "num w-12 text-right text-lg",
+                      d.pontos < 0 ? "text-destructive" : "text-primary",
+                    )}
+                  >
+                    {formatPontos(d.pontos)}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </section>
     </div>
   );
 }
