@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, History, Minus, Plus, ShieldAlert } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeftRight,
+  History,
+  Minus,
+  Plus,
+  ShieldAlert,
+  UserPlus,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { TopBar } from "@/components/layout/TopBar";
@@ -61,6 +69,11 @@ interface RegistroAuditoria {
   justificativa: string | null;
   feitoPor: string | null;
   feitoEm: string;
+}
+
+interface PlayerBasico {
+  id: string;
+  apelido: string;
 }
 
 type Campo = "gols" | "assistencias" | "carrinhos";
@@ -166,6 +179,7 @@ export function AdminSumulaScreen() {
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
   const [auditoria, setAuditoria] = useState<RegistroAuditoria[]>([]);
   const [nomes, setNomes] = useState<Map<string, string>>(new Map());
+  const [elenco, setElenco] = useState<PlayerBasico[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [carregandoPelada, setCarregandoPelada] = useState(false);
@@ -179,6 +193,13 @@ export function AdminSumulaScreen() {
   const [anularAlvo, setAnularAlvo] = useState<Ocorrencia | null>(null);
   const [anularMotivo, setAnularMotivo] = useState("");
   const [anularRemoveCarrinho, setAnularRemoveCarrinho] = useState(true);
+  const [trocaAlvo, setTrocaAlvo] = useState<Linha | null>(null);
+  const [trocaEntra, setTrocaEntra] = useState("");
+  const [trocaLevar, setTrocaLevar] = useState(true);
+  const [trocaMotivo, setTrocaMotivo] = useState("");
+  const [adicionarAberto, setAdicionarAberto] = useState(false);
+  const [adicionarId, setAdicionarId] = useState("");
+  const [adicionarMotivo, setAdicionarMotivo] = useState("");
 
   const pelada = peladas.find((p) => p.id === peladaId) ?? null;
   const publicado = pelada?.resultado === "publicado";
@@ -271,15 +292,21 @@ export function AdminSumulaScreen() {
   }, []);
 
   const carregarLista = useCallback(async () => {
-    const [{ data }, { data: perfis }] = await Promise.all([
+    const [{ data }, { data: perfis }, { data: jogadores }] = await Promise.all([
       supabase
         .from("peladas")
         .select("id, data, local, resultado, publicado_em")
         .order("data", { ascending: false })
         .limit(30),
       supabase.from("profiles").select("id, nome"),
+      supabase
+        .from("players")
+        .select("id, apelido")
+        .eq("ativo", true)
+        .order("apelido", { ascending: true }),
     ]);
     setNomes(new Map((perfis ?? []).map((p) => [p.id, p.nome || "Admin"])));
+    setElenco(jogadores ?? []);
     const lista = data ?? [];
     setPeladas(lista);
     return lista;
@@ -316,6 +343,69 @@ export function AdminSumulaScreen() {
     setLinhas((prev) =>
       prev.map((l) => (l.playerId === playerId ? { ...l, [campo]: Math.max(0, valor) } : l)),
     );
+  };
+
+  const foraDaPelada = useMemo(
+    () => elenco.filter((j) => !linhas.some((l) => l.playerId === j.id)),
+    [elenco, linhas],
+  );
+
+  const aplicarEdicao = async (args: {
+    sai?: string | null;
+    entra?: string | null;
+    levar?: boolean;
+    motivo: string;
+  }) => {
+    if (!pelada || salvando) return false;
+    setSalvando(true);
+    const { error } = await supabase.rpc("editar_escalacao", {
+      p_pelada_id: pelada.id,
+      p_sai: args.sai ?? null,
+      p_entra: args.entra ?? null,
+      p_levar_numeros: args.levar ?? false,
+      p_justificativa: args.motivo.trim() || null,
+    });
+    setSalvando(false);
+    if (error) {
+      toast.error(mensagemErro(error));
+      return false;
+    }
+    await carregarPelada(pelada.id);
+    return true;
+  };
+
+  const confirmarTroca = async () => {
+    if (!trocaAlvo) return;
+    const entra = trocaEntra || null;
+    const ok = await aplicarEdicao({
+      sai: trocaAlvo.playerId,
+      entra,
+      levar: !!entra && trocaLevar,
+      motivo: trocaMotivo,
+    });
+    if (!ok) return;
+    const nome = elenco.find((j) => j.id === entra)?.apelido;
+    toast.success(
+      entra
+        ? `${trocaAlvo.apelido} saiu e ${nome} entrou.`
+        : `${trocaAlvo.apelido} saiu da pelada.`,
+    );
+    setTrocaAlvo(null);
+  };
+
+  const confirmarAdicao = async () => {
+    if (!adicionarId) return;
+    const ok = await aplicarEdicao({ entra: adicionarId, motivo: adicionarMotivo });
+    if (!ok) return;
+    toast.success(`${elenco.find((j) => j.id === adicionarId)?.apelido} entrou na pelada.`);
+    setAdicionarAberto(false);
+  };
+
+  const abrirTroca = (l: Linha) => {
+    setTrocaEntra("");
+    setTrocaLevar(true);
+    setTrocaMotivo("");
+    setTrocaAlvo(l);
   };
 
   const lesoesAtivas = useMemo(() => {
@@ -554,7 +644,30 @@ export function AdminSumulaScreen() {
         </section>
       ) : (
         <>
-          <ul className="mt-5 grid gap-3 lg:grid-cols-2">
+          <div className="mt-5 flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              <span className="num">{linhas.length}</span> na escalação
+              {publicado ? " · toda mudança aqui pede um motivo" : ""}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setAdicionarId("");
+                setAdicionarMotivo("");
+                setAdicionarAberto(true);
+              }}
+              disabled={foraDaPelada.length === 0}
+              className={cn(
+                "flex min-h-[44px] items-center gap-2 rounded-xl border border-border bg-surface-2 px-3 text-sm font-medium text-foreground transition-colors hover:border-primary/40 disabled:opacity-50",
+                FOCUS_RING,
+              )}
+            >
+              <UserPlus size={15} aria-hidden="true" />
+              Adicionar jogador
+            </button>
+          </div>
+
+          <ul className="mt-3 grid gap-3 lg:grid-cols-2">
             {linhas.map((l) => {
               const lesoes = lesoesAtivas.get(l.playerId) ?? 0;
               const pontos = previaPontos(l);
@@ -567,7 +680,7 @@ export function AdminSumulaScreen() {
                     mudou ? "border-primary/60" : "border-border",
                   )}
                 >
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3">
                     {l.fotoUrl ? (
                       <img
                         src={l.fotoUrl}
@@ -604,6 +717,19 @@ export function AdminSumulaScreen() {
                         prévia
                       </p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => abrirTroca(l)}
+                      disabled={salvando}
+                      aria-label={`Trocar ou tirar ${l.apelido} da pelada`}
+                      title="Trocar ou tirar da pelada"
+                      className={cn(
+                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-50",
+                        FOCUS_RING,
+                      )}
+                    >
+                      <ArrowLeftRight size={16} />
+                    </button>
                   </div>
 
                   <div className="mt-3 grid gap-2 md:grid-cols-3 lg:grid-cols-1">
@@ -937,6 +1063,150 @@ export function AdminSumulaScreen() {
               onClick={() => void anular()}
             >
               Anular
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={trocaAlvo !== null} onOpenChange={(o) => !o && setTrocaAlvo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Trocar ou tirar {trocaAlvo?.apelido}</DialogTitle>
+            <DialogDescription>
+              Deixe em branco para só tirar da pelada. Escolhendo alguém, essa pessoa entra no
+              lugar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-2">
+            <label htmlFor="troca-entra" className="text-sm font-medium text-foreground">
+              Quem entra no lugar
+            </label>
+            <select
+              id="troca-entra"
+              value={trocaEntra}
+              onChange={(e) => setTrocaEntra(e.target.value)}
+              className={INPUT}
+            >
+              <option value="">Ninguém, só tirar</option>
+              {foraDaPelada.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.apelido}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {trocaEntra ? (
+            <label className="flex min-h-[44px] items-start gap-3 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={trocaLevar}
+                onChange={(e) => setTrocaLevar(e.target.checked)}
+                className="mt-1 h-5 w-5 accent-[hsl(var(--primary))]"
+              />
+              <span>
+                Levar os números de {trocaAlvo?.apelido} junto
+                <span className="block text-xs text-muted-foreground">
+                  {trocaAlvo?.gols ?? 0} gols, {trocaAlvo?.assistencias ?? 0} assistências,{" "}
+                  {trocaAlvo?.carrinhos ?? 0} carrinhos passam para quem entrar. Desmarcado, os
+                  números somem e quem entra começa zerado.
+                </span>
+              </span>
+            </label>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Os números de {trocaAlvo?.apelido} nesta pelada vão sair junto.
+            </p>
+          )}
+
+          <div className="grid gap-2">
+            <label htmlFor="troca-motivo" className="text-sm font-medium text-foreground">
+              Motivo {publicado ? "" : "(opcional)"}
+            </label>
+            <textarea
+              id="troca-motivo"
+              value={trocaMotivo}
+              onChange={(e) => setTrocaMotivo(e.target.value)}
+              maxLength={280}
+              placeholder="Ex.: marquei o nome errado na hora de escalar"
+              className={TEXTAREA}
+            />
+          </div>
+
+          <DialogFooter className="gap-2">
+            <button type="button" className={BTN_SECONDARY} onClick={() => setTrocaAlvo(null)}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className={BTN_PRIMARY}
+              disabled={salvando || (publicado && !trocaMotivo.trim())}
+              onClick={() => void confirmarTroca()}
+            >
+              {salvando ? "Salvando..." : trocaEntra ? "Trocar" : "Tirar da pelada"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={adicionarAberto} onOpenChange={setAdicionarAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar jogador à pelada</DialogTitle>
+            <DialogDescription>
+              Entra na escalação zerado. Os números você lança na súmula.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-2">
+            <label htmlFor="add-jogador" className="text-sm font-medium text-foreground">
+              Jogador
+            </label>
+            <select
+              id="add-jogador"
+              value={adicionarId}
+              onChange={(e) => setAdicionarId(e.target.value)}
+              className={INPUT}
+            >
+              <option value="">Escolha quem entra</option>
+              {foraDaPelada.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.apelido}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-2">
+            <label htmlFor="add-motivo" className="text-sm font-medium text-foreground">
+              Motivo {publicado ? "" : "(opcional)"}
+            </label>
+            <textarea
+              id="add-motivo"
+              value={adicionarMotivo}
+              onChange={(e) => setAdicionarMotivo(e.target.value)}
+              maxLength={280}
+              placeholder="Ex.: jogou mas ficou de fora da escalação"
+              className={TEXTAREA}
+            />
+          </div>
+
+          <DialogFooter className="gap-2">
+            <button
+              type="button"
+              className={BTN_SECONDARY}
+              onClick={() => setAdicionarAberto(false)}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className={BTN_PRIMARY}
+              disabled={salvando || !adicionarId || (publicado && !adicionarMotivo.trim())}
+              onClick={() => void confirmarAdicao()}
+            >
+              {salvando ? "Salvando..." : "Adicionar"}
             </button>
           </DialogFooter>
         </DialogContent>

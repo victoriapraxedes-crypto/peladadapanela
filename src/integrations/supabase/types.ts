@@ -869,7 +869,18 @@ export type Database = {
         Args: { p_fim?: string; p_season_id: string }
         Returns: undefined
       }
+      editar_escalacao: {
+        Args: {
+          p_entra?: string | null
+          p_justificativa?: string | null
+          p_levar_numeros?: boolean
+          p_pelada_id: string
+          p_sai?: string | null
+        }
+        Returns: undefined
+      }
       hoje_local: { Args: never; Returns: string }
+      votacao_mvp_fecha_em: { Args: { p_pelada_id: string }; Returns: string | null }
       is_admin: { Args: never; Returns: boolean }
       is_aprovado: { Args: never; Returns: boolean }
       publicar_resultado: { Args: { p_pelada_id: string }; Returns: undefined }

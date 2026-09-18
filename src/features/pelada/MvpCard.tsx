@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Crown, Timer } from "lucide-react";
 import { toast } from "sonner";
 
 import { InitialsAvatar } from "@/components/layout/Avatar";
@@ -14,15 +16,21 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { buscarDesempenhos, type DesempenhoPelada } from "@/features/desempenho/dados";
+import { posicaoLabel } from "@/features/jogadores/labels";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { formatDataPorExtenso } from "@/lib/format";
+import { formatPontos } from "@/lib/pontuacao";
+import { FOCUS_RING } from "@/lib/ui";
+import { cn } from "@/lib/utils";
 
-// Decisão de produto: a /pelada mostra sempre a PRÓXIMA pelada em aberto, então
-// uma pelada finalizada nunca apareceria aqui e a votação de MVP ficaria
-// inalcançável. Por isso este card NÃO é da pelada exibida na tela: ele é da
-// pelada finalizada mais recente em que o usuário atual participou. Assim o
-// convite para votar acompanha a pessoa até ela votar, mesmo que a próxima
-// pelada já esteja marcada.
+// A tela /pelada mostra sempre a PRÓXIMA pelada em aberto, então este card não é
+// da pelada exibida: ele é da pelada publicada mais recente em que a pessoa
+// jogou. A votação abre quando o resultado é publicado e fecha 24h depois.
+// Passado esse prazo o card vira o resultado e fica assim para sempre.
+
+type Posicao = Database["public"]["Enums"]["posicao"];
 
 const SECTION_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary";
 
@@ -30,6 +38,7 @@ interface Participante {
   id: string;
   apelido: string;
   fotoUrl: string | null;
+  posicao: Posicao | null;
   /** convidado sem conta não vota, mas pode receber voto */
   votante: boolean;
 }
@@ -37,10 +46,12 @@ interface Participante {
 interface Dados {
   peladaId: string;
   data: string;
+  fechaEm: number;
   participantes: Participante[];
   totalVotos: number;
   meuVotoEm: string | null;
-  vencedores: string[];
+  vencedores: { playerId: string; votos: number }[];
+  desempenhos: DesempenhoPelada[];
 }
 
 function Foto({ p, size }: { p: Participante | undefined; size: number }) {
@@ -60,6 +71,23 @@ function Foto({ p, size }: { p: Participante | undefined; size: number }) {
   return <InitialsAvatar apelido={p?.apelido ?? "??"} size={size} />;
 }
 
+function faltam(ate: number, agora: number): string {
+  const min = Math.max(0, Math.round((ate - agora) / 60000));
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}min`;
+}
+
+function StatMvp({ rotulo, valor }: { rotulo: string; valor: string | number }) {
+  return (
+    <div className="rounded-lg bg-surface-2 px-2 py-2 text-center">
+      <p className="num text-lg leading-tight text-foreground">{valor}</p>
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{rotulo}</p>
+    </div>
+  );
+}
+
 export function MvpCard() {
   const { player } = useAuth();
   const playerId = player?.id ?? null;
@@ -68,6 +96,7 @@ export function MvpCard() {
   const [loading, setLoading] = useState(true);
   const [alvo, setAlvo] = useState<Participante | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [agora, setAgora] = useState(() => Date.now());
   const montadoRef = useRef(true);
 
   const carregar = useCallback(async () => {
@@ -77,17 +106,17 @@ export function MvpCard() {
       return;
     }
 
-    // 1) pelada finalizada mais recente em que o usuário participou
+    // 1) pelada publicada mais recente em que a pessoa jogou
     const { data: minhas } = await supabase
       .from("pelada_players")
-      .select("pelada_id, peladas!inner(id, data, status)")
+      .select("pelada_id, peladas!inner(id, data, resultado, publicado_em)")
       .eq("player_id", playerId)
-      .eq("peladas.status", "finalizada");
+      .eq("peladas.resultado", "publicado");
 
-    const ordenadas = (minhas ?? [])
-      .filter((r) => r.peladas)
-      .sort((a, b) => (a.peladas!.data < b.peladas!.data ? 1 : -1));
-    const alvoPelada = ordenadas[0]?.peladas;
+    const alvoPelada = (minhas ?? [])
+      .map((r) => r.peladas)
+      .filter((p): p is NonNullable<typeof p> => !!p && !!p.publicado_em)
+      .sort((a, b) => (a.publicado_em! < b.publicado_em! ? 1 : -1))[0];
 
     if (!alvoPelada) {
       setDados(null);
@@ -95,17 +124,17 @@ export function MvpCard() {
       return;
     }
 
-    // 2) participantes, 3) votos, 4) vencedores
-    const [{ data: parts }, { data: votos }, { data: winners }] = await Promise.all([
+    const [{ data: parts }, { data: votos }, { data: winners }, desempenhos] = await Promise.all([
       supabase
         .from("pelada_players")
-        .select("player_id, players(id, apelido, foto_url, profile_id)")
+        .select("player_id, players(id, apelido, foto_url, profile_id, posicao_principal)")
         .eq("pelada_id", alvoPelada.id),
       supabase
         .from("mvp_votes")
         .select("voter_player_id, voted_player_id")
         .eq("pelada_id", alvoPelada.id),
       supabase.from("mvp_winners").select("player_id, votos").eq("pelada_id", alvoPelada.id),
+      buscarDesempenhos({ peladaId: alvoPelada.id }).catch(() => [] as DesempenhoPelada[]),
     ]);
 
     const participantes: Participante[] = (parts ?? [])
@@ -114,6 +143,7 @@ export function MvpCard() {
         id: r.player_id,
         apelido: r.players!.apelido,
         fotoUrl: r.players!.foto_url,
+        posicao: r.players!.posicao_principal,
         votante: r.players!.profile_id !== null,
       }))
       .sort((a, b) => a.apelido.localeCompare(b.apelido, "pt-BR"));
@@ -124,10 +154,14 @@ export function MvpCard() {
     setDados({
       peladaId: alvoPelada.id,
       data: alvoPelada.data,
+      fechaEm: new Date(alvoPelada.publicado_em!).getTime() + 24 * 60 * 60 * 1000,
       participantes,
       totalVotos: (votos ?? []).length,
       meuVotoEm: meu?.voted_player_id ?? null,
-      vencedores: (winners ?? []).map((w) => w.player_id).filter((id): id is string => !!id),
+      vencedores: (winners ?? [])
+        .filter((w) => w.player_id)
+        .map((w) => ({ playerId: w.player_id as string, votos: Number(w.votos ?? 0) })),
+      desempenhos,
     });
     setLoading(false);
   }, [playerId]);
@@ -140,6 +174,19 @@ export function MvpCard() {
       montadoRef.current = false;
     };
   }, [carregar]);
+
+  // relógio de minuto em minuto: atualiza a contagem e revela o resultado na hora
+  useEffect(() => {
+    const t = window.setInterval(() => setAgora(Date.now()), 30000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  const encerrada = dados !== null && agora >= dados.fechaEm;
+
+  useEffect(() => {
+    // assim que o prazo vira, busca o vencedor
+    if (encerrada && dados && dados.vencedores.length === 0) void carregar();
+  }, [encerrada, dados, carregar]);
 
   const votar = async () => {
     if (!alvo || !playerId || !dados || enviando) return;
@@ -171,35 +218,103 @@ export function MvpCard() {
 
   if (!dados) return null;
 
-  const total = dados.participantes.filter((p) => p.votante).length;
-  const fechada = total > 0 && dados.totalVotos >= total;
+  const votantes = dados.participantes.filter((p) => p.votante).length;
   const votadoPorMim = dados.participantes.find((p) => p.id === dados.meuVotoEm);
   const vencedores = dados.vencedores
-    .map((id) => dados.participantes.find((p) => p.id === id))
-    .filter((p): p is Participante => !!p);
+    .map((v) => ({ p: dados.participantes.find((x) => x.id === v.playerId), votos: v.votos }))
+    .filter((v): v is { p: Participante; votos: number } => !!v.p);
+  const empate = vencedores.length > 1;
+
+  if (encerrada) {
+    return (
+      <section className="animar-surgir mt-5 overflow-hidden rounded-2xl border border-primary/60 bg-surface">
+        <div className="bg-primary/10 px-5 py-3">
+          <p className="flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-[0.08em] text-primary">
+            <Crown size={14} aria-hidden="true" />
+            {empate ? "MVPs da galera" : "MVP da galera"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {formatDataPorExtenso(dados.data)} · votação encerrada
+          </p>
+        </div>
+
+        {vencedores.length === 0 ? (
+          <p className="p-5 text-sm text-muted-foreground">
+            A votação fechou sem nenhum voto. Fica para a próxima.
+          </p>
+        ) : (
+          <div className="grid gap-4 p-5">
+            {vencedores.map(({ p, votos }) => {
+              const d = dados.desempenhos.find((x) => x.playerId === p.id);
+              return (
+                <div key={p.id} className="grid gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative shrink-0">
+                      <Foto p={p} size={88} />
+                      <span
+                        className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                        aria-hidden="true"
+                      >
+                        <Crown size={15} />
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-display text-2xl font-bold leading-tight text-foreground">
+                        {p.apelido}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{posicaoLabel(p.posicao)}</p>
+                      <p className="mt-1 text-sm text-primary">
+                        <span className="num">{votos}</span> {votos === 1 ? "voto" : "votos"} de{" "}
+                        <span className="num">{votantes}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {d && (
+                    <div className="grid grid-cols-4 gap-2">
+                      <StatMvp rotulo="Gols" valor={d.gols} />
+                      <StatMvp rotulo="Assist." valor={d.assistencias} />
+                      <StatMvp rotulo="Carrinhos" valor={d.carrinhos} />
+                      <StatMvp rotulo="Pontos" valor={formatPontos(d.pontos)} />
+                    </div>
+                  )}
+
+                  <Link
+                    to="/jogadores/$id"
+                    params={{ id: p.id }}
+                    className={cn(
+                      "flex min-h-[44px] items-center justify-center rounded-xl border border-border text-sm font-medium text-foreground transition-colors hover:border-primary/40",
+                      FOCUS_RING,
+                    )}
+                  >
+                    Ver perfil de {p.apelido}
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {votadoPorMim && (
+          <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
+            Você votou em {votadoPorMim.apelido}.
+          </p>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="mt-5 rounded-2xl border border-border bg-surface p-5">
       <p className={SECTION_LABEL}>MVP da galera</p>
       <p className="mt-1 text-xs text-muted-foreground">{formatDataPorExtenso(dados.data)}</p>
 
-      {fechada ? (
-        <div className="mt-4">
-          <div className="flex items-center gap-3">
-            <Foto p={vencedores[0]} size={56} />
-            <span className="font-display text-lg font-bold text-foreground">
-              {vencedores.length > 0
-                ? vencedores.map((v) => v.apelido).join(" e ")
-                : "Sem vencedor"}
-            </span>
-          </div>
-          {votadoPorMim && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Você votou em {votadoPorMim.apelido}
-            </p>
-          )}
-        </div>
-      ) : dados.meuVotoEm ? (
+      <p className="mt-2 flex items-center gap-2 text-xs text-primary">
+        <Timer size={13} aria-hidden="true" />
+        Fecha em {faltam(dados.fechaEm, agora)}
+      </p>
+
+      {dados.meuVotoEm ? (
         <div className="mt-4">
           <div className="flex items-center gap-3">
             <Foto p={votadoPorMim} size={56} />
@@ -208,13 +323,16 @@ export function MvpCard() {
             </span>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Votação em andamento · <span className="num">{dados.totalVotos}</span> de{" "}
-            <span className="num">{total}</span> já votaram
+            <span className="num">{dados.totalVotos}</span> de{" "}
+            <span className="num">{votantes}</span> já votaram. O resultado aparece quando a votação
+            fechar.
           </p>
         </div>
       ) : (
         <div className="mt-4">
-          <p className="text-sm text-muted-foreground">Quem foi o melhor em campo?</p>
+          <p className="text-sm text-muted-foreground">
+            Quem foi o melhor em campo? O voto é único e não pode ser trocado nem retirado.
+          </p>
           <div className="mt-3 grid grid-cols-2 gap-3">
             {dados.participantes
               .filter((p) => p.id !== playerId)
@@ -223,7 +341,10 @@ export function MvpCard() {
                   key={p.id}
                   type="button"
                   onClick={() => setAlvo(p)}
-                  className="flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 p-3 text-center hover:border-primary/40"
+                  className={cn(
+                    "flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 p-3 text-center transition-colors hover:border-primary/40",
+                    FOCUS_RING,
+                  )}
                 >
                   <Foto p={p} size={56} />
                   <span className="w-full truncate text-sm text-foreground">{p.apelido}</span>
@@ -237,7 +358,9 @@ export function MvpCard() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar voto em {alvo?.apelido}?</AlertDialogTitle>
-            <AlertDialogDescription>O voto não pode ser trocado depois.</AlertDialogDescription>
+            <AlertDialogDescription>
+              É um voto só, e ele não pode ser trocado nem retirado depois.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={enviando}>Cancelar</AlertDialogCancel>
