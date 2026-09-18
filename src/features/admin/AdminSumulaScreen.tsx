@@ -129,8 +129,8 @@ function Stepper({
   minimo?: number;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-xl border border-border px-2 py-2">
-      <span className="text-xs text-muted-foreground">{rotulo}</span>
+    <div className="flex flex-col items-center gap-1 rounded-xl border border-border px-2 py-2">
+      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{rotulo}</span>
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -606,7 +606,7 @@ export function AdminSumulaScreen() {
                     </div>
                   </div>
 
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                  <div className="mt-3 grid gap-2 md:grid-cols-3 lg:grid-cols-1">
                     {CAMPOS.map(({ campo, rotulo }) => (
                       <Stepper
                         key={campo}
