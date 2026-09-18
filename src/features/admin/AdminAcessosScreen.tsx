@@ -15,6 +15,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { InitialsAvatar } from "@/components/layout/Avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 import { FOCUS_RING } from "@/lib/ui";
 import type { Database } from "@/integrations/supabase/types";
@@ -27,7 +28,16 @@ interface Solicitacao {
   email: string | null;
   avatar_url: string | null;
   criado_em: string;
+  role: Papel;
 }
+
+type Papel = Database["public"]["Enums"]["user_role"];
+
+const FILTROS: { valor: Acesso; rotulo: string }[] = [
+  { valor: "pendente", rotulo: "Pendentes" },
+  { valor: "aprovado", rotulo: "Aprovados" },
+  { valor: "recusado", rotulo: "Recusados" },
+];
 
 function formatarData(iso: string) {
   const d = new Date(iso);
@@ -37,6 +47,7 @@ function formatarData(iso: string) {
 }
 
 export function AdminAcessosScreen() {
+  const { profile } = useAuth();
   const [lista, setLista] = useState<Solicitacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<Acesso>("pendente");
@@ -55,7 +66,7 @@ export function AdminAcessosScreen() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, nome, email, avatar_url, criado_em")
+      .select("id, nome, email, avatar_url, criado_em, role")
       .eq("acesso", filtro)
       .order("criado_em", { ascending: true });
     if (!montadoRef.current) return;
@@ -94,6 +105,34 @@ export function AdminAcessosScreen() {
     [salvandoId, carregar],
   );
 
+  const alterarPapel = useCallback(
+    async (alvo: Solicitacao, novo: Papel) => {
+      if (salvandoId) return;
+      setSalvandoId(alvo.id);
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ role: novo })
+        .eq("id", alvo.id)
+        .select("id");
+      setSalvandoId(null);
+      if (error) {
+        toast.error("Não foi possível mudar o papel. " + error.message);
+        return;
+      }
+      if (!data || data.length === 0) {
+        toast.error("A alteração não foi aplicada.");
+        return;
+      }
+      toast.success(
+        novo === "admin"
+          ? `${alvo.nome || alvo.email} agora é admin.`
+          : `${alvo.nome || alvo.email} voltou a ser jogador.`,
+      );
+      await carregar();
+    },
+    [salvandoId, carregar],
+  );
+
   return (
     <>
       <TopBar />
@@ -103,9 +142,30 @@ export function AdminAcessosScreen() {
           Solicitações de acesso
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Quem entra pelo link fica aqui até você liberar.
+          Quem entra pelo link fica aqui até você liberar. Em Aprovados você também escolhe quem é
+          admin.
         </p>
       </header>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {FILTROS.map((f) => (
+          <button
+            key={f.valor}
+            type="button"
+            onClick={() => setFiltro(f.valor)}
+            aria-pressed={filtro === f.valor}
+            className={cn(
+              "min-h-[44px] rounded-xl border px-4 text-sm font-medium transition-colors",
+              filtro === f.valor
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-transparent text-foreground hover:border-primary/40",
+              FOCUS_RING,
+            )}
+          >
+            {f.rotulo}
+          </button>
+        ))}
+      </div>
 
       <section className="mt-5 grid gap-3">
         {loading ? (
@@ -115,7 +175,11 @@ export function AdminAcessosScreen() {
           </>
         ) : lista.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {filtro === "pendente" ? "Nenhuma solicitação pendente." : "Ninguém recusado."}
+            {filtro === "pendente"
+              ? "Nenhuma solicitação pendente."
+              : filtro === "aprovado"
+                ? "Ninguém aprovado ainda."
+                : "Ninguém recusado."}
           </p>
         ) : (
           lista.map((p) => (
@@ -133,24 +197,58 @@ export function AdminAcessosScreen() {
                   <InitialsAvatar apelido={p.nome ?? "?"} size={48} />
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{p.nome || "Sem nome"}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {p.nome || "Sem nome"}
+                    {p.role === "admin" && (
+                      <span className="ml-2 rounded-md bg-primary/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                        admin
+                      </span>
+                    )}
+                  </p>
                   <p className="break-all text-xs text-muted-foreground">{p.email}</p>
                   <p className="text-xs text-muted-foreground">{formatarData(p.criado_em)}</p>
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  disabled={salvandoId !== null}
-                  onClick={() => void alterar(p, "aprovado")}
-                  className={cn(
-                    "flex h-12 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground transition-colors hover:bg-primary-dim disabled:opacity-50",
-                    FOCUS_RING,
-                  )}
-                >
-                  {salvandoId === p.id ? "Aprovando..." : "Aprovar"}
-                </button>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {filtro === "aprovado" ? (
+                  p.id === profile?.id ? (
+                    <p className="text-xs text-muted-foreground sm:col-span-2">
+                      Você não pode mudar o seu próprio papel. Peça a outro admin.
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={salvandoId !== null}
+                      onClick={() => void alterarPapel(p, p.role === "admin" ? "jogador" : "admin")}
+                      className={cn(
+                        "flex h-12 items-center justify-center rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 sm:col-span-2",
+                        p.role === "admin"
+                          ? "border border-border bg-transparent text-foreground hover:border-primary/40"
+                          : "bg-primary font-display uppercase tracking-[-0.01em] text-primary-foreground hover:bg-primary-dim",
+                        FOCUS_RING,
+                      )}
+                    >
+                      {salvandoId === p.id
+                        ? "Salvando..."
+                        : p.role === "admin"
+                          ? "Tirar admin"
+                          : "Tornar admin"}
+                    </button>
+                  )
+                ) : (
+                  <button
+                    type="button"
+                    disabled={salvandoId !== null}
+                    onClick={() => void alterar(p, "aprovado")}
+                    className={cn(
+                      "flex h-12 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold uppercase tracking-[-0.01em] text-primary-foreground transition-colors hover:bg-primary-dim disabled:opacity-50",
+                      FOCUS_RING,
+                    )}
+                  >
+                    {salvandoId === p.id ? "Aprovando..." : "Aprovar"}
+                  </button>
+                )}
                 {filtro === "pendente" && (
                   <button
                     type="button"
@@ -169,17 +267,6 @@ export function AdminAcessosScreen() {
           ))
         )}
       </section>
-
-      <button
-        type="button"
-        onClick={() => setFiltro((f) => (f === "pendente" ? "recusado" : "pendente"))}
-        className={cn(
-          "mt-5 flex h-[52px] w-full items-center justify-center rounded-xl border border-border bg-transparent text-sm font-medium text-foreground transition-colors hover:border-primary/40",
-          FOCUS_RING,
-        )}
-      >
-        {filtro === "pendente" ? "Ver recusados" : "Ver pendentes"}
-      </button>
 
       <AlertDialog open={recusarAlvo !== null} onOpenChange={(o) => !o && setRecusarAlvo(null)}>
         <AlertDialogContent>
