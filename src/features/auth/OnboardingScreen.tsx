@@ -37,7 +37,6 @@ export function OnboardingScreen() {
   const navigate = useNavigate();
 
   const [nome, setNome] = useState("");
-  const [apelido, setApelido] = useState("");
   const [posicao, setPosicao] = useState<Posicao | null>(null);
   const [pe, setPe] = useState<Pe>("direito");
   const [numero, setNumero] = useState("");
@@ -56,7 +55,7 @@ export function OnboardingScreen() {
 
   if (loading || !session || player) return <AuthLoading />;
 
-  const valido = nome.trim().length > 0 && apelido.trim().length > 0 && posicao !== null;
+  const valido = nome.trim().length > 0 && posicao !== null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +67,8 @@ export function OnboardingScreen() {
     const { error } = await supabase.from("players").insert({
       profile_id: user.id,
       nome: nome.trim(),
-      apelido: apelido.trim(),
+      // O app mostra sempre o nome; o apelido virou espelho dele.
+      apelido: nome.trim(),
       posicao_principal: posicao,
       pe_dominante: pe,
       numero_preferido: numeroPreferido,
@@ -108,23 +108,6 @@ export function OnboardingScreen() {
               required
               className="h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             />
-          </div>
-
-          <div className="grid gap-2">
-            <label htmlFor="apelido" className="text-sm font-medium text-foreground">
-              Apelido
-            </label>
-            <input
-              id="apelido"
-              value={apelido}
-              maxLength={16}
-              onChange={(e) => setApelido(e.target.value)}
-              required
-              className="h-[52px] rounded-xl border border-border bg-surface-2 px-4 text-sm text-foreground outline-none transition-colors focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            />
-            <p className="text-xs text-muted-foreground">
-              É o nome que aparece no placar e no ranking. Até 16 caracteres.
-            </p>
           </div>
 
           <div className="grid gap-2">

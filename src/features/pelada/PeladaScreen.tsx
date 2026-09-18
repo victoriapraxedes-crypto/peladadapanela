@@ -478,13 +478,13 @@ export function PeladaScreen() {
                 className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2"
               >
                 <label htmlFor="novo-convidado" className="sr-only">
-                  Nome ou apelido do convidado
+                  Nome do convidado
                 </label>
                 <input
                   id="novo-convidado"
                   value={convidado}
                   onChange={(e) => setConvidado(e.target.value)}
-                  placeholder="Convidado sem conta (nome ou apelido)"
+                  placeholder="Convidado sem conta (nome)"
                   maxLength={40}
                   className={INPUT}
                 />

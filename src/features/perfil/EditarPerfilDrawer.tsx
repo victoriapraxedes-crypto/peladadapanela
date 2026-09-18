@@ -55,7 +55,6 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [nome, setNome] = useState(player.nome);
-  const [apelido, setApelido] = useState(player.apelido);
   const [fotoUrl, setFotoUrl] = useState<string | null>(player.foto_url);
   const [posicao, setPosicao] = useState<Posicao | null>(player.posicao_principal);
   const [secundarias, setSecundarias] = useState<Posicao[]>(
@@ -72,7 +71,6 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
   useEffect(() => {
     if (!open) return;
     setNome(player.nome);
-    setApelido(player.apelido);
     setFotoUrl(player.foto_url);
     setPosicao(player.posicao_principal);
     setSecundarias((player.posicoes_secundarias ?? []) as Posicao[]);
@@ -126,8 +124,8 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
 
   async function salvar() {
     if (salvando) return;
-    if (!nome.trim() || !apelido.trim()) {
-      toast.error("Nome e apelido são obrigatórios.");
+    if (!nome.trim()) {
+      toast.error("O nome é obrigatório.");
       return;
     }
 
@@ -147,7 +145,8 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
       .from("players")
       .update({
         nome: nome.trim(),
-        apelido: apelido.trim(),
+        // O app mostra sempre o nome; o apelido virou espelho dele.
+        apelido: nome.trim(),
         foto_url: fotoUrl,
         posicao_principal: posicao,
         posicoes_secundarias: secundarias,
@@ -179,9 +178,9 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
         <div className="grid max-h-[70vh] gap-6 overflow-y-auto px-5 pb-8">
           <div className="grid justify-items-center gap-3">
             {fotoUrl ? (
-              <img src={fotoUrl} alt={apelido} className="h-24 w-24 rounded-full object-cover" />
+              <img src={fotoUrl} alt={nome} className="h-24 w-24 rounded-full object-cover" />
             ) : (
-              <InitialsAvatar apelido={apelido || nome} size={96} />
+              <InitialsAvatar apelido={nome} size={96} />
             )}
             <button
               type="button"
@@ -210,22 +209,6 @@ export function EditarPerfilDrawer({ open, onOpenChange, player, onSaved }: Prop
               onChange={(e) => setNome(e.target.value)}
               className={INPUT_CLASS}
             />
-          </div>
-
-          <div className="grid gap-2">
-            <label htmlFor="perfil-apelido" className="text-sm font-medium text-foreground">
-              Apelido
-            </label>
-            <input
-              id="perfil-apelido"
-              value={apelido}
-              maxLength={16}
-              onChange={(e) => setApelido(e.target.value)}
-              className={INPUT_CLASS}
-            />
-            <p className="text-xs text-muted-foreground">
-              É o nome que aparece no placar e no ranking.
-            </p>
           </div>
 
           <div className="grid gap-2">

@@ -81,7 +81,6 @@ export function AdminJogadoresScreen() {
   const [vinculando, setVinculando] = useState(false);
 
   const [nome, setNome] = useState("");
-  const [apelido, setApelido] = useState("");
   const [posicao, setPosicao] = useState<Posicao | null>(null);
   const [pe, setPe] = useState<Pe>("direito");
   const [numero, setNumero] = useState("");
@@ -91,7 +90,7 @@ export function AdminJogadoresScreen() {
       supabase
         .from("players")
         .select("id, nome, apelido, foto_url, posicao_principal, ativo, profile_id")
-        .order("apelido", { ascending: true }),
+        .order("nome", { ascending: true }),
       supabase.from("profiles").select("id, nome, email").order("nome", { ascending: true }),
     ]);
     const lista = data ?? [];
@@ -120,13 +119,12 @@ export function AdminJogadoresScreen() {
 
   const limpar = () => {
     setNome("");
-    setApelido("");
     setPosicao(null);
     setPe("direito");
     setNumero("");
   };
 
-  const valido = nome.trim() !== "" && apelido.trim() !== "";
+  const valido = nome.trim() !== "";
 
   const vincular = async () => {
     if (!vincularAlvo || !contaEscolhida || vinculando) return;
@@ -153,7 +151,8 @@ export function AdminJogadoresScreen() {
 
     const { error } = await supabase.from("players").insert({
       nome: nome.trim(),
-      apelido: apelido.trim(),
+      // O app mostra sempre o nome; o apelido virou espelho dele.
+      apelido: nome.trim(),
       posicao_principal: posicao,
       pe_dominante: pe,
       numero_preferido: numero.trim() === "" ? null : Number(numero),
@@ -232,20 +231,6 @@ export function AdminJogadoresScreen() {
                 required
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className={INPUT}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label htmlFor="j-apelido" className="text-sm font-medium text-foreground">
-                Apelido
-              </label>
-              <input
-                id="j-apelido"
-                required
-                maxLength={16}
-                value={apelido}
-                onChange={(e) => setApelido(e.target.value)}
                 className={INPUT}
               />
             </div>

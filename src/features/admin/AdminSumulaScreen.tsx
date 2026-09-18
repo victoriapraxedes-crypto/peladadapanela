@@ -7,7 +7,9 @@ import {
   Minus,
   Plus,
   ShieldAlert,
+  Timer,
   UserPlus,
+  Vote,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -71,6 +73,11 @@ interface RegistroAuditoria {
   feitoEm: string;
 }
 
+interface VotoMvp {
+  votante: string;
+  votado: string;
+}
+
 interface PlayerBasico {
   id: string;
   apelido: string;
@@ -111,6 +118,14 @@ const ACAO_LABEL: Record<string, string> = {
   anular: "anulou a ocorrência",
   vincular_convidado: "vinculou convidado",
 };
+
+function faltamAte(ate: number, agora: number): string {
+  const min = Math.max(0, Math.round((ate - agora) / 60000));
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}min`;
+}
 
 function mensagemErro(error: { message: string } | null): string {
   return error?.message ?? "Erro desconhecido.";
@@ -180,6 +195,8 @@ export function AdminSumulaScreen() {
   const [auditoria, setAuditoria] = useState<RegistroAuditoria[]>([]);
   const [nomes, setNomes] = useState<Map<string, string>>(new Map());
   const [elenco, setElenco] = useState<PlayerBasico[]>([]);
+  const [votos, setVotos] = useState<VotoMvp[]>([]);
+  const [agora, setAgora] = useState(() => Date.now());
 
   const [loading, setLoading] = useState(true);
   const [carregandoPelada, setCarregandoPelada] = useState(false);
@@ -218,6 +235,7 @@ export function AdminSumulaScreen() {
       { data: stats, error: errStats },
       { data: ocs },
       { data: aud },
+      { data: vts },
     ] = await Promise.all([
       supabase
         .from("pelada_players")
@@ -238,6 +256,7 @@ export function AdminSumulaScreen() {
         .eq("pelada_id", id)
         .order("feito_em", { ascending: false })
         .limit(50),
+      supabase.from("mvp_votes").select("voter_player_id, voted_player_id").eq("pelada_id", id),
     ]);
 
     if (errEsc || errStats) {
@@ -288,6 +307,7 @@ export function AdminSumulaScreen() {
         feitoEm: a.feito_em,
       })),
     );
+    setVotos((vts ?? []).map((v) => ({ votante: v.voter_player_id, votado: v.voted_player_id })));
     setCarregandoPelada(false);
   }, []);
 
@@ -331,6 +351,11 @@ export function AdminSumulaScreen() {
       ativo = false;
     };
   }, [carregarLista, carregarPelada]);
+
+  useEffect(() => {
+    const t = window.setInterval(() => setAgora(Date.now()), 30000);
+    return () => window.clearInterval(t);
+  }, []);
 
   const trocarPelada = async (id: string) => {
     if (id === peladaId) return;
@@ -407,6 +432,28 @@ export function AdminSumulaScreen() {
     setTrocaMotivo("");
     setTrocaAlvo(l);
   };
+
+  const votacao = useMemo(() => {
+    if (!pelada?.publicado_em) return null;
+    const fechaEm = new Date(pelada.publicado_em).getTime() + 24 * 60 * 60 * 1000;
+    const podemVotar = linhas.filter((l) => !l.convidado);
+    const porCandidato = new Map<string, number>();
+    for (const v of votos) porCandidato.set(v.votado, (porCandidato.get(v.votado) ?? 0) + 1);
+    const apuracao = linhas
+      .map((l) => ({ linha: l, votos: porCandidato.get(l.playerId) ?? 0 }))
+      .filter((x) => x.votos > 0)
+      .sort((a, b) => b.votos - a.votos || a.linha.apelido.localeCompare(b.linha.apelido, "pt-BR"));
+    const jaVotaram = new Set(votos.map((v) => v.votante));
+    return {
+      fechaEm,
+      encerrada: agora >= fechaEm,
+      podemVotar: podemVotar.length,
+      votaram: podemVotar.filter((l) => jaVotaram.has(l.playerId)).length,
+      apuracao,
+      faltam: podemVotar.filter((l) => !jaVotaram.has(l.playerId)),
+      maisVotos: apuracao[0]?.votos ?? 0,
+    };
+  }, [pelada, linhas, votos, agora]);
 
   const lesoesAtivas = useMemo(() => {
     const m = new Map<string, number>();
@@ -773,6 +820,78 @@ export function AdminSumulaScreen() {
               </span>
             )}
           </p>
+
+          {votacao && (
+            <section className="mt-5 rounded-2xl border border-azul/50 bg-surface p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-[0.08em] text-azul">
+                  <Vote size={14} aria-hidden="true" />
+                  Votação do MVP
+                </p>
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Timer size={12} aria-hidden="true" />
+                  {votacao.encerrada
+                    ? "Encerrada"
+                    : `Fecha em ${faltamAte(votacao.fechaEm, agora)}`}
+                </p>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Só admin vê esta parcial. Para a galera, o vencedor só aparece quando a votação
+                fecha.
+              </p>
+
+              <p className="mt-3 text-sm text-foreground">
+                <span className="num text-xl">{votacao.votaram}</span> de{" "}
+                <span className="num">{votacao.podemVotar}</span> já votaram
+              </p>
+              <div
+                className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2"
+                role="img"
+                aria-label={`${votacao.votaram} de ${votacao.podemVotar} já votaram`}
+              >
+                <div
+                  className="h-full rounded-full bg-azul"
+                  style={{
+                    width: `${votacao.podemVotar ? (votacao.votaram / votacao.podemVotar) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+
+              {votacao.apuracao.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">Nenhum voto até agora.</p>
+              ) : (
+                <ul className="mt-4 grid gap-2">
+                  {votacao.apuracao.map(({ linha, votos: n }) => (
+                    <li key={linha.playerId} className="grid gap-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="min-w-0 truncate text-sm text-foreground">
+                          {linha.apelido}
+                        </span>
+                        <span className="num shrink-0 text-sm text-foreground">
+                          {n} {n === 1 ? "voto" : "votos"}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{
+                            width: `${votacao.maisVotos ? (n / votacao.maisVotos) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {votacao.faltam.length > 0 && (
+                <p className="mt-4 text-xs text-muted-foreground">
+                  {votacao.encerrada ? "Não votaram" : "Ainda faltam"}:{" "}
+                  {votacao.faltam.map((l) => l.apelido).join(", ")}
+                </p>
+              )}
+            </section>
+          )}
 
           {ocorrencias.length > 0 && (
             <section className="mt-5 rounded-2xl border border-destructive/40 bg-surface p-5">
